@@ -1,0 +1,567 @@
+/* ============================================================
+   PERSYS — Admin Dashboard Stylesheet
+   Design : Sidebar + Topbar + Stat Cards + Notification Panel
+   ============================================================ */
+
+/* ── 1. RESET & CUSTOM PROPERTIES ─────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Brand palette */
+  --clr-purple-darkest:  #1E0038;   /* sidebar deep bg           */
+  --clr-purple-sidebar:  #260041;   /* sidebar background        */
+  --clr-purple-topbar:   #6B0FBA;   /* topbar + active nav bg    */
+  --clr-purple-active:   #7B1FC8;   /* active nav item bg        */
+  --clr-purple-icon:     #5B0FA8;   /* stat-card icon circle     */
+  --clr-purple-notif-hd: #2D0057;   /* notification panel header */
+  --clr-purple-mid:      #6A0DAD;   /* links, accents            */
+  --clr-yellow-accent:   #F5C518;   /* "My Dashboard" icon dots  */
+  --clr-yellow-badge:    #F5C518;   /* Pending badge             */
+
+  /* Neutrals */
+  --clr-white:           #FFFFFF;
+  --clr-cream-bg:        #F7F3E8;   /* main content area         */
+  --clr-card-bg:         #FDFAF2;   /* stat card background      */
+  --clr-notif-item-bg:   #FDFAF2;   /* notification item bg      */
+  --clr-border-light:    #E8E0CC;
+  --clr-text-dark:       #111111;
+  --clr-text-mid:        #444444;
+  --clr-text-light:      #888888;
+  --clr-sidebar-text:    #D4C5E8;   /* inactive nav label        */
+
+  /* Dimensions */
+  --sidebar-width:       168px;
+  --topbar-height:        72px;
+
+  /* Typography */
+  --font-base: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --gap-sm:   8px;
+  --gap-md:  16px;
+  --gap-lg:  24px;
+  --gap-xl:  32px;
+
+  /* Radius */
+  --radius-sm:   6px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+
+  /* Transitions */
+  --transition: 0.2s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-base);
+  background-color: var(--clr-cream-bg);
+  color: var(--clr-text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* ── 2. APP SHELL ──────────────────────────────────────────── */
+/*
+   Layout:
+   ┌────────────────────────────────────┐
+   │ .sidebar │ .main-wrapper           │
+   │  (fixed) │  ┌──────────────────┐  │
+   │          │  │   .topbar        │  │
+   │          │  ├──────────────────┤  │
+   │          │  │   .page-content  │  │
+   │          │  └──────────────────┘  │
+   └────────────────────────────────────┘
+*/
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── 3. SIDEBAR ────────────────────────────────────────────── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background-color: var(--clr-purple-sidebar);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 0 24px;
+  flex-shrink: 0;
+  /* Stick to the left on scroll */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Avatar */
+.sidebar-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  margin-bottom: 10px;
+}
+
+/* Admin name */
+.sidebar-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--clr-white);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Role subtitle */
+.sidebar-role {
+  font-size: 0.7rem;
+  color: var(--clr-sidebar-text);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* Divider */
+.sidebar-divider {
+  width: 80%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+}
+
+/* Navigation */
+.sidebar-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+/* Each nav item — anchor wrapping icon + label */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-sidebar-text);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--clr-white);
+}
+
+/* Active state — yellow-tinted bg pill */
+.nav-item.active {
+  background-color: var(--clr-purple-topbar);
+  color: var(--clr-white);
+}
+
+/* Nav icon wrapper */
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Active nav icon gets yellow tint */
+.nav-item.active .nav-icon svg {
+  stroke: var(--clr-yellow-accent);
+}
+
+/* ── 4. MAIN WRAPPER (right of sidebar) ───────────────────── */
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* prevent flex blowout */
+}
+
+/* ── 5. TOPBAR ─────────────────────────────────────────────── */
+
+.topbar {
+  height: var(--topbar-height);
+  background-color: var(--clr-purple-topbar);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--gap-xl);
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+/* Four-square / waffle icon — two yellow dots, two purple-ish */
+.topbar-icon {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.topbar-icon span {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background-color: var(--clr-yellow-accent);
+}
+
+/* Alternate squares to match the image (top-right & bottom-left muted) */
+.topbar-icon span:nth-child(2),
+.topbar-icon span:nth-child(3) {
+  background-color: rgba(245, 197, 24, 0.45);
+}
+
+.topbar-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--clr-white);
+}
+
+/* Mobile hamburger (hidden on desktop) */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: var(--clr-white);
+  border-radius: 2px;
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+/* Animated hamburger → ✕ when sidebar is open on mobile */
+.hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.is-open span:nth-child(2) { opacity: 0; }
+.hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── 6. PAGE CONTENT ───────────────────────────────────────── */
+
+.page-content {
+  flex: 1;
+  background-color: var(--clr-cream-bg);
+  padding: var(--gap-xl);
+  display: grid;
+  /* Left: stat cards | Right: notifications — matches the image ratio */
+  grid-template-columns: 1fr 420px;
+  gap: var(--gap-xl);
+  align-items: start;
+}
+
+/* ── 7. STAT CARDS COLUMN ──────────────────────────────────── */
+
+.stat-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+/* Individual stat card */
+.stat-card {
+  background-color: var(--clr-card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--clr-border-light);
+  padding: 22px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow var(--transition);
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+}
+
+/* Card header row: icon circle + label */
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Circular icon container */
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--clr-purple-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--clr-white);
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Card label */
+.stat-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--clr-text-dark);
+}
+
+/* Large stat number */
+.stat-number {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--clr-text-dark);
+  text-align: center;
+  letter-spacing: 0.02em;
+  padding: 4px 0 2px;
+}
+
+/* ── 8. NOTIFICATIONS PANEL ────────────────────────────────── */
+
+.notif-panel {
+  background-color: var(--clr-card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--clr-border-light);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Panel header bar — dark purple */
+.notif-header {
+  background-color: var(--clr-purple-notif-hd);
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.notif-header-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--clr-white);
+  letter-spacing: 0.01em;
+}
+
+/* List of notification items */
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Individual notification item */
+.notif-item {
+  background-color: var(--clr-notif-item-bg);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--clr-border-light);
+  transition: background-color var(--transition);
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background-color: #F0EAD8;
+}
+
+/* Top row: request number + pending badge */
+.notif-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.notif-request-id {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--clr-text-dark);
+}
+
+/* Yellow "Pending" badge */
+.badge-pending {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  background-color: var(--clr-yellow-badge);
+  color: #1a1a1a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Meta row: From / Type / Date */
+.notif-meta {
+  font-size: 0.8125rem;
+  color: var(--clr-text-mid);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.notif-meta strong {
+  color: var(--clr-text-dark);
+  font-weight: 600;
+}
+
+/* Meta inline items on one line */
+.notif-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* "Click to view" link */
+.notif-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-purple-mid);
+  transition: opacity var(--transition);
+}
+
+.notif-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+.notif-link svg {
+  width: 14px;
+  height: 14px;
+  stroke: var(--clr-purple-mid);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* ── 9. SIDEBAR OVERLAY (mobile) ───────────────────────────── */
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.sidebar-overlay.is-visible {
+  display: block;
+  opacity: 1;
+}
+
+/* ── 10. RESPONSIVE — TABLET (≤ 1024px) ───────────────────── */
+
+@media (max-width: 1024px) {
+  .page-content {
+    grid-template-columns: 1fr;
+  }
+
+  .notif-panel {
+    max-width: 100%;
+  }
+}
+
+/* ── 11. RESPONSIVE — MOBILE (≤ 768px) ────────────────────── */
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 200px;
+  }
+
+  /* Sidebar becomes off-canvas on mobile */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform var(--transition);
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .main-wrapper {
+    width: 100%;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .page-content {
+    padding: var(--gap-lg) var(--gap-md);
+  }
+}
+
+/* ── 12. RESPONSIVE — SMALL MOBILE (≤ 480px) ──────────────── */
+
+@media (max-width: 480px) {
+  .topbar-title {
+    font-size: 1.125rem;
+  }
+
+  .stat-number {
+    font-size: 2.25rem;
+  }
+
+  .notif-meta-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
