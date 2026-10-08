@@ -300,7 +300,7 @@ $profile = $stmt->fetch();
                     class="password-value field-val"
                     id="profilePasswordValue"
                     data-password=""
-                  ><?= htmlspecialchars($profile['password_hash']) ?></span>
+                  ></span>
 
                   <!-- Eye toggle button -->
                   <button

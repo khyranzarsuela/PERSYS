@@ -38,12 +38,22 @@ if (!empty($_POST['ajax_submit_leave'])) {
             start_datetime, end_datetime, total_leave_days, reason_details, status)
          VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, 'Pending')"
     );
-    $stmtIns->execute([
-        $reqNum, $empId, $leaveTypeId,
-        $startDate . ' 08:00:00',
-        $endDate   . ' 17:00:00',
-        $totalDays, $reasonDetails
-    ]);
+    try {
+        $stmtIns->execute([
+            $reqNum, $empId, $leaveTypeId,
+            $startDate . ' 08:00:00',
+            $endDate   . ' 17:00:00',
+            $totalDays, $reasonDetails
+        ]);
+    } catch (PDOException $e) {
+        // UNIQUE constraint violation (request_number duplicate due to race)
+        if ($e->getCode() === '23000') {
+            echo json_encode(['success' => false, 'message' => 'A submission conflict occurred. Please try again.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error. Please try again.']);
+        }
+        exit;
+    }
 
     echo json_encode(['success' => true, 'request_number' => $reqNum, 'status' => 'Pending']);
     exit;
