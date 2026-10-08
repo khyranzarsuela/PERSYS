@@ -47,7 +47,7 @@ $profile = $stmt->fetch();
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BCSHS-SAC | Admin Profile</title>
+  <title>BCSHS-SAC | Profile</title>
 
   <!--
     Paths relative to Pages/Admin/ — go up two levels to reach root.
@@ -56,6 +56,7 @@ $profile = $stmt->fetch();
   -->
   <link rel="stylesheet" href="../../styles/user.css" />
   <link rel="stylesheet" href="../../styles/user-profile.css" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -71,25 +72,15 @@ $profile = $stmt->fetch();
   <div class="app-shell">
 
     <!-- ── SIDEBAR ──────────────────────────────────────── -->
-    <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
-
-      <!-- Admin profile block -->
-      <img
-        class="sidebar-avatar"
-        src="https://placehold.co/72x72/6B0FBA/FFFFFF?text=A"
-        alt="Admin profile photo"
-      />
-       <p class="sidebar-name"> <?php echo $_SESSION['username']; ?></p>
-      <p class="sidebar-role"> <?php echo $_SESSION['role_name']; ?></p>
-
+    <aside class="sidebar" id="sidebar" aria-label="User navigation">
+      <img class="sidebar-avatar" src="https://placehold.co/72x72/6B0FBA/FFFFFF?text=U" alt="User profile photo" />
+      <p class="sidebar-name"><?php echo htmlspecialchars($_SESSION['username']); ?></p>
+      <p class="sidebar-role"><?php echo htmlspecialchars($_SESSION['role_name']); ?></p>
       <div class="sidebar-divider" role="separator"></div>
-
       <nav aria-label="Main menu">
         <ul class="sidebar-nav">
-
-          <!-- My Dashboard -->
           <li>
-            <a href="adminDashboard.php" class="nav-item">
+            <a href="userDashboard.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -101,10 +92,8 @@ $profile = $stmt->fetch();
               My Dashboard
             </a>
           </li>
-
-          <!-- Profile — active on this page -->
           <li>
-            <a href="#" class="nav-item active" aria-current="page">
+            <a href="userProfile.php" class="nav-item active" aria-current="page">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="8" r="4"/>
@@ -114,25 +103,8 @@ $profile = $stmt->fetch();
               Profile
             </a>
           </li>
-
-          <!-- Employees -->
           <li>
-            <a href="adminEmployees.html" class="nav-item">
-              <span class="nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <circle cx="9" cy="8" r="3.5"/>
-                  <path d="M2 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>
-                  <circle cx="17" cy="8" r="2.5"/>
-                  <path d="M20 20c0-2.5-1.9-4.5-4.5-5"/>
-                </svg>
-              </span>
-              Employees
-            </a>
-          </li>
-
-          <!-- Service Credits -->
-          <li>
-            <a href="adminServiceCredits.html" class="nav-item">
+            <a href="userServiceCredits.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="9" r="5"/>
@@ -142,10 +114,8 @@ $profile = $stmt->fetch();
               Service Credits
             </a>
           </li>
-
-          <!-- Transactions -->
           <li>
-            <a href="adminTransactions.html" class="nav-item">
+            <a href="userRequest.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <rect x="4" y="2" width="16" height="20" rx="2"/>
@@ -154,37 +124,20 @@ $profile = $stmt->fetch();
                   <line x1="8" y1="15" x2="12" y2="15"/>
                 </svg>
               </span>
-              Transactions
+              Request
             </a>
           </li>
-
-          <!-- Settings -->
           <li>
-            <a href="adminSettings.html" class="nav-item">
+            <a href="userSettings.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83
-                           2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
-                           1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
-                           A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
-                           l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06
-                           A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1
-                           H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9
-                           a1.65 1.65 0 0 0-.33-1.82l-.06-.06
-                           a2 2 0 0 1 2.83-2.83l.06.06
-                           A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51
-                           V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51
-                           1.65 1.65 0 0 0 1.82-.33l.06-.06
-                           a2 2 0 0 1 2.83 2.83l-.06.06
-                           A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1
-                           H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
                 </svg>
               </span>
               Settings
             </a>
           </li>
-
         </ul>
       </nav>
     </aside>
@@ -417,10 +370,22 @@ $profile = $stmt->fetch();
   </div>
   <!-- ── END APP SHELL ──────────────────────────────────── -->
 
-  <!--
-    admin.js handles: sidebar toggle, nav active state,
-    AND the profile password eye-toggle (guarded block at bottom).
-  -->
-  <script src="../../scripts/admin.js"></script>
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" id="logoutModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="logoutModalTitle">Log Out</h2>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to log out?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelLogoutBtn" class="btn-secondary">Cancel</button>
+        <button type="button" id="confirmLogoutBtn" class="btn-yellow">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../scripts/user.js"></script>
 </body>
 </html>
