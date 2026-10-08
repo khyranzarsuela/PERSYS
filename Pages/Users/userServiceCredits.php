@@ -6,7 +6,7 @@ require_user();
 $pdo   = db();
 $empId = (int) $_SESSION['employee_id'];
 
-// Balance helpers (same logic as dashboard)
+// Balance helper
 function scBalance(PDO $pdo, int $empId, int $typeId): float {
     $s = $pdo->prepare(
         "SELECT
@@ -176,7 +176,9 @@ $transactions = $stmtTx->fetchAll(PDO::FETCH_ASSOC);
                 <td><?= htmlspecialchars($tx['activity_name']) ?></td>
                 <td>
                   <?php
-                  $bc2 = $tx['transaction_type'] === 'EARNED' ? 'status-badge--approved' : 'status-badge--rejected';
+                  $bc2 = $tx['transaction_type'] === 'EARNED'
+                      ? 'status-badge--approved'
+                      : 'status-badge--rejected';
                   ?>
                   <span class="status-badge <?= $bc2 ?>"><?= htmlspecialchars($tx['transaction_type']) ?></span>
                 </td>

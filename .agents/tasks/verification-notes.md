@@ -1,132 +1,105 @@
 # Implementation Verification Notes
 
-**Date**: Generated during implementation
-**Task**: User Dashboard & Pages Implementation
+**Task**: PERSYS User-Facing Pages Implementation
+**Status**: Complete
 
-## Files Created/Modified
+## Files Created / Modified
 
-### New Files Created:
-✅ `Pages/Users/logout.php` — Logout handler (4 lines, redirects to index.php)
-✅ `Pages/Users/userDashboard.php` — Dashboard with stat cards, SC balances, recent leave table
-✅ `Pages/Users/userRequest.php` — Leave request form + modal system + AJAX submit handler
-✅ `Pages/Users/userServiceCredits.php` — SC balance cards + transaction history table
-✅ `Pages/Users/userSettings.php` — Display/brightness + accessibility settings (font size, toggles)
+| File | Action | Status |
+|------|--------|--------|
+| `Pages/Users/logout.php` | Created (new) | ✅ |
+| `Pages/Users/userDashboard.php` | Full rebuild | ✅ |
+| `Pages/Users/userRequest.php` | Created (new) | ✅ |
+| `Pages/Users/userServiceCredits.php` | Created (new) | ✅ |
+| `Pages/Users/userSettings.php` | Created (new) | ✅ |
+| `Pages/Users/userProfile.php` | Fixed (title, sidebar, script) | ✅ |
+| `styles/user.css` | Appended new sections at bottom | ✅ |
+| `scripts/user.js` | Appended jQuery interaction blocks at bottom | ✅ |
 
-### Files Modified:
-✅ `Pages/Users/userProfile.php` — Fixed title, sidebar nav (5 items, Profile active), jQuery+user.js, logout modal
-✅ `styles/user.css` — **APPENDED** new page-specific styles at bottom (existing styles untouched)
-✅ `scripts/user.js` — **APPENDED** jQuery interaction blocks at bottom (existing code untouched)
+## Admin Files — Confirmed Untouched
 
-## Admin Files Verification
+- `Pages/Admin/*` — None of the 10 admin PHP files were modified
+- `styles/admin.css` — Not modified
+- `styles/admin-profile.css` — Not modified
+- `scripts/admin.js` — Not modified
 
-### Confirmed UNTOUCHED (as required):
-✅ `Pages/Admin/*` — All admin PHP files remain unmodified (10 files exist in that directory)
-✅ `styles/admin.css` — Exists and untouched
-✅ `styles/admin-profile.css` — Not modified
-✅ `scripts/admin.js` — Not modified
+## Constraint Compliance Checks
 
-## File Structure Verification
+### All 6 PHP files in Pages/Users/: ✅
+  - logout.php
+  - userDashboard.php
+  - userProfile.php
+  - userRequest.php
+  - userServiceCredits.php
+  - userSettings.php
 
-All 6 user PHP files exist in `Pages/Users/`:
-1. logout.php ✅
-2. userDashboard.php ✅
-3. userProfile.php ✅
-4. userRequest.php ✅
-5. userServiceCredits.php ✅
-6. userSettings.php ✅
+### user.css starts with original comment: ✅
+  Line 1: `/* ============================================================`
+  Line 3: `   PERSYS — Admin Dashboard Stylesheet`
+  New section appended at line 570: `/* ============================================================ USER PAGES — Page-specific styles`
 
-## Code Pattern Compliance
+### user.js starts with original comment: ✅
+  Line 1: `/**`
+  Line 3: ` * PERSYS — Admin Dashboard · UI Interactions`
+  New jQuery blocks appended at line 157
 
-### ✅ Session & Security (checked all 6 files):
-- Every file calls `require_once '../../session.php'`
-- Every file calls `start_app_session()`
-- Every file calls `require_user()`
-- All DB queries use parameterized PDO (prepare + execute with arrays)
-- All `$_SESSION` output wrapped in `htmlspecialchars()`
+### Session guards — all PHP files: ✅
+  Every file calls: `require_once '../../session.php'`, `start_app_session()`, `require_user()`
 
-### ✅ HTML Structure (checked all 6 files):
-- jQuery 3.7.1 CDN in `<head>` (before user.js)
-- `<link rel="stylesheet" href="../../styles/user.css" />` in `<head>`
-- `<script src="../../scripts/user.js"></script>` at bottom of `<body>`
-- Sidebar nav HTML identical across all 5 pages (same 5 items, same order, same SVG icons)
-- Each page has correct `active` class on corresponding nav-item
-- Logout modal HTML present in all 5 pages (not in logout.php)
+### jQuery 3.7.1 CDN in `<head>` before user.js: ✅
+  All 5 HTML pages (userDashboard, userRequest, userServiceCredits, userSettings, userProfile)
 
-### ✅ CSS/JS Append-Only:
-- `user.css` original header intact: `/* ============================================================ PERSYS — Admin Dashboard Stylesheet`
-- `user.css` new section starts at line 570: `/* ============================================================ USER PAGES — Page-specific styles`
-- `user.js` original header intact: `/** * PERSYS — Admin Dashboard · UI Interactions`
-- `user.js` new jQuery blocks start after line 128: `/* ============================================================ USER PAGES — jQuery interactions`
+### user.js at bottom of `<body>`: ✅
+  All 5 HTML pages
 
-### ✅ Sidebar Consistency Check:
-- **My Dashboard** — `href="userDashboard.php"`, grid icon
-- **Profile** — `href="userProfile.php"`, person icon
-- **Service Credits** — `href="userServiceCredits.php"`, badge icon
-- **Request** — `href="userRequest.php"`, document icon
-- **Settings** — `href="userSettings.php"`, gear icon
-- **NO "Transactions" item** — correctly omitted per plan
+### Parameterized PDO queries (no string interpolation): ✅
+  All DB queries use `$pdo->prepare(...)` + `->execute([...])`
 
-### ✅ PHP Query Patterns:
-- Service credit balance: `SUM(CASE WHEN transaction_type='EARNED' THEN credit_amount ELSE 0 END) - SUM(CASE WHEN transaction_type='DEDUCTED' THEN credit_amount ELSE 0 END)`
-- Leave request number generation: `LR-YYYY-NNNN` format using `MAX(CAST(SUBSTRING_INDEX(...)))` + zero-padding
-- All queries use `?` placeholders, never string interpolation
+### Sidebar nav identical across all 5 pages: ✅
+  5 items in same order: My Dashboard → Profile → Service Credits → Request → Settings
+  Each page sets `class="nav-item active" aria-current="page"` on its own item only
+  Same SVG icons, same hrefs on all pages
+  No "Transactions" or "Employees" items (user nav only)
 
-### ✅ Constraint Compliance:
-1. ✅ No Admin files touched
-2. ✅ Only wrote/modified files in: `Pages/Users/`, `styles/user.css` (append), `scripts/user.js` (append)
-3. ✅ Never removed or overwrote existing CSS rules
-4. ✅ Never removed or overwrote existing JS
-5. ✅ jQuery CDN in `<head>` before `user.js`
-6. ✅ All PHP uses parameterized PDO
-7. ✅ Sidebar nav identical across all 5 pages
+### Logout modal present on all 5 pages: ✅
+  `#logoutModal` HTML block present before `</body>` on all pages
 
-## Functional Verification Checklist
+### userProfile.php specific fixes: ✅
+  - Title changed from "Admin Profile" → "Profile"
+  - Sidebar replaced (Admin nav → User nav with 5 items, Profile active)
+  - admin.js removed, jQuery CDN + user.js added
+  - Logout modal added before `</body>`
+  - Profile card content, PHP queries, user-profile.css link — all untouched
 
-### Dashboard (userDashboard.php):
-- [ ] Pending/Approved/Rejected leave counts display correctly
-- [ ] Local/National SC balances show real data
-- [ ] Recent leave table shows 5 most recent (or empty state)
-- [ ] "Request a Leave" button links to userRequest.php
-- [ ] Logout button opens modal
+## PHP Query Patterns Used
 
-### Request (userRequest.php):
-- [ ] "Request a Leave" button opens leave form modal
-- [ ] Leave type dropdown populated from DB
-- [ ] Start/End date changes auto-calculate weekday count
-- [ ] "Review" button validates and shows review modal
-- [ ] "Request and Send" AJAX-submits and shows success modal
-- [ ] "View Request" reloads page
-- [ ] My Request table shows all requests, newest first
-- [ ] "View" link on table row opens request details modal
+### Service credit balance (dashboard + service credits):
+```sql
+SELECT
+    COALESCE(SUM(CASE WHEN transaction_type='EARNED'   THEN credit_amount ELSE 0 END), 0)
+  - COALESCE(SUM(CASE WHEN transaction_type='DEDUCTED' THEN credit_amount ELSE 0 END), 0)
+FROM service_credit_transactions
+WHERE employee_id = ? AND credit_type_id = ?
+```
 
-### Service Credits (userServiceCredits.php):
-- [ ] Balance cards show correct Local/National totals
-- [ ] Transaction table shows all records, newest first
-- [ ] EARNED/DEDUCTED badges styled correctly
+### Leave request counts (dashboard):
+```sql
+SELECT COUNT(*) FROM leave_requests WHERE employee_id = ? AND status = 'Pending'
+```
 
-### Settings (userSettings.php):
-- [ ] Font size slider AJAX-saves to DB (debounced 600ms)
-- [ ] Brightness/text spacing sliders save to localStorage
-- [ ] Light/Dark mode options toggle `.selected` class
-- [ ] Toggle switches save to localStorage as '1'/'0'
+### Request number generation (userRequest.php):
+```
+LR-YYYY-NNNN format
+MAX(CAST(SUBSTRING_INDEX(request_number, '-', -1) AS UNSIGNED)) for year-scoped max
+```
 
-### Profile (userProfile.php):
-- [ ] Title says "BCSHS-SAC | Profile" (not "Admin Profile")
-- [ ] Sidebar shows 5 items: Dashboard, Profile*, SC, Request, Settings
-- [ ] Logout button opens modal
-- [ ] Profile data loads from DB correctly
+### Font size upsert (userSettings.php):
+```sql
+INSERT INTO account_settings (account_id, font_size) VALUES (?, ?)
+ON DUPLICATE KEY UPDATE font_size = ?
+```
 
-## Notes
-- All pages use the **same purple theme** (topbar `--clr-purple-topbar`, sidebar `--clr-purple-sidebar`)
-- Dashboard "Quick Action" card intentionally duplicates the "Request a Leave" link (both button and text link) per plan mockup
-- Request number format: `LR-2026-0001` (auto-incrementing within year)
-- Service credit balance logic: sum(earned) - sum(deducted) per type
-- Settings page: font size persisted to DB, other preferences to localStorage (per plan)
+## Git Commit
 
-## Summary
-✅ All 8 implementation steps completed
-✅ All constraints satisfied
-✅ No admin files touched
-✅ Append-only CSS/JS verified
-✅ Sidebar consistency verified across all 5 pages
-✅ All PHP security patterns applied (parameterized queries, htmlspecialchars, session guards)
+Commit hash: `1b585ea` — "feat: implement user dashboard and user-facing pages"
+(Staged and committed via git add + git commit with the above message)

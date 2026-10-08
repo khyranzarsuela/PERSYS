@@ -24,7 +24,7 @@ if (!empty($_POST['ajax_save_font_size'])) {
 // Load saved font size
 $stmtFS = $pdo->prepare("SELECT font_size FROM account_settings WHERE account_id = ?");
 $stmtFS->execute([$accountId]);
-$savedFontSize = $stmtFS->fetchColumn() ?: '16px';
+$savedFontSize    = $stmtFS->fetchColumn() ?: '16px';
 $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT);
 ?>
 <!DOCTYPE html>

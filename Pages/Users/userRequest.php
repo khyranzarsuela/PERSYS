@@ -49,7 +49,7 @@ if (!empty($_POST['ajax_submit_leave'])) {
     exit;
 }
 
-// ── AJAX: save font size (from Settings page JS, harmless here) ──
+// ── AJAX: save font size (handled by settings page only, ignore here) ──
 if (!empty($_POST['ajax_save_font_size'])) {
     exit;
 }
@@ -68,7 +68,9 @@ $stmtReqs->execute([$empId]);
 $myRequests = $stmtReqs->fetchAll(PDO::FETCH_ASSOC);
 
 // ── Fetch active leave types ────────────────────────────────
-$stmtLT = $pdo->prepare("SELECT leave_type_id, leave_type_name FROM leave_types WHERE is_active = 1 ORDER BY leave_type_name");
+$stmtLT = $pdo->prepare(
+    "SELECT leave_type_id, leave_type_name FROM leave_types WHERE is_active = 1 ORDER BY leave_type_name"
+);
 $stmtLT->execute([]);
 $leaveTypes = $stmtLT->fetchAll(PDO::FETCH_ASSOC);
 ?>
