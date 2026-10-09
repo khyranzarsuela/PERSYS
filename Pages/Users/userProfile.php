@@ -388,4 +388,4 @@ $profile = $stmt->fetch();
 
   <script src="../../scripts/user.js"></script>
 </body>
-</html>
+</html

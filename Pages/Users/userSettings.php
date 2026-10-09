@@ -253,4 +253,4 @@ $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT)
 
   <script src="../../scripts/user.js"></script>
 </body>
-</html>
+</html
