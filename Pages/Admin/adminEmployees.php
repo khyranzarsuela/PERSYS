@@ -53,7 +53,9 @@ $stmt->execute();
 $NonTeachingEmployees = $stmt->fetchAll();
 
 $stmt = $pdo->prepare("
-    SELECT employees.employee_number, 
+    SELECT 
+    employees.employee_id,
+    employees.employee_number, 
     employees.first_name, 
     employees.middle_name, 
     employees.last_name, 
@@ -929,78 +931,93 @@ dialog::backdrop {
                   <th>Action</th>
                 </tr>
               </thead>
-                <tbody>
-                     <?php if (empty($Accounts)): ?>
-                        <tr>
-                            <td colspan="10" style="text-align: center;">No account records found.</td>
-                        </tr>
-
-                <?php else: ?>
-                     <?php foreach ($Accounts as $request): ?>  
+               <tbody>
+     <?php if (empty($Accounts)): ?>
+        <tr>
+            <td colspan="6" style="text-align: center;">No account records found.</td>
+        </tr>
+     <?php else: ?>
+         <?php foreach ($Accounts as $row): ?>  
               <tr>
-             
+                  <td><?= htmlspecialchars($row['employee_number']) ?></td>
+                  <td><?= htmlspecialchars($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']) ?></td>
+                  <td><?= htmlspecialchars($row['personnel_type']) ?></td>
+                  <td><?= htmlspecialchars($row['deped_email']) ?></td>
+                  <td><?= htmlspecialchars($row['is_active'] === 1 ? 'Active' : 'No Account') ?></td>
+                  <td>
+                      <?php if ($row['is_active'] === 1): ?>
+                          <button type="button">View</button>
+                      <?php else: ?>
+                          <!-- Added unique class and data attributes to supply the data dynamically -->
+                          <button type="button" 
+                                  class="btn-add-employee openCreateAccountBtn" 
+                                  aria-label="Create Account"
+                                  data-id="<?= htmlspecialchars($row['employee_id']) ?>"
+                                  data-number="<?= htmlspecialchars($row['employee_number']) ?>"
+                                  data-name="<?= htmlspecialchars($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']) ?>"
+                                  data-type="<?= htmlspecialchars($row['personnel_type']) ?>"
+                                  data-email="<?= htmlspecialchars($row['deped_email']) ?>">
+                              Create Account</button>
+                      <?php endif; ?>
+                  </td>
+              </tr>
+         <?php endforeach; ?>
+     <?php endif; ?>
 
-              <td><?= htmlspecialchars($request['employee_number']) ?></td><td><?= htmlspecialchars($request['first_name']) . ' ' . htmlspecialchars($request['middle_name']) . ' ' . htmlspecialchars($request['last_name']) ?></td><td><?= htmlspecialchars($request['personnel_type']) ?></td><td><?= htmlspecialchars($request['deped_email']) ?></td>
-              <td><?= htmlspecialchars($request['is_active'] === 1 ? 'Active' : 'No Account') ?></td>
-              <td><?= $request['is_active'] === 1 ? "<button>View</button>" : " <button id='openCreateAccount' class='btn-add-employee' aria-label='Create Account'>Create Account</button>" ?></td>
-
-            </tr>
-
-               <?php endforeach; ?>
-
-<?php endif; ?>
               
                 </tbody>
               </table>
       <!-- The Dialog / Big Card -->
-        <dialog id="createAccountDialog">
-           <h2>Register Account</h2>
-            <p>Register a new account for the selected employee.</p>
+      <dialog id="createAccountDialog">
+    <h2>Register Account</h2>
+    <p>Register a new account for the selected employee.</p>
 
-           <form action="createAccount.php" method="post" id="accountForm" aria-label="Create Account form">
-    <!-- File Upload button -->
-           <div>
-                <label for="employee_number" class="block text-sm font-medium text-gray-700 mb-1">Employee Number</label>
-                <input type="text" id="employee_number" name="employee_number" value="<?= htmlspecialchars($request['employee_number']) ?>" readonly>
-            </div>
+    <form action="createAccount.php" method="POST" id="accountForm" aria-label="Create Account form">
+        <!-- Kept empty; JavaScript will fill these values -->
+        <input type="hidden" id="modal_employee_id" name="employee_id" value="">
 
-            <!-- Employee Name -->
-            <div>
-                <label for="employee_name" class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                <input type="text" id="employee_name" name="employee_name" value="<?= htmlspecialchars($request['first_name']) . ' ' . htmlspecialchars($request['middle_name']) . ' ' . htmlspecialchars($request['last_name']) ?>" readonly>
-            </div>
+        <div>
+            <label for="employee_number">Employee Number</label>
+            <input type="text" id="employee_number" name="employee_number" readonly>
+        </div>
 
-            <!-- Personnel Type -->
-            <div>
-                <label for="personnel_type" class="block text-sm font-medium text-gray-700 mb-1">Personnel Type</label>
-                <input type="text" id="personnel_type" name="personnel_type" value="<?= htmlspecialchars($request['personnel_type']) ?>" readonly>
-            </div>
-                      
-            <!-- DepEd Email -->
-            <div>
-                <label for="deped_email" class="block text-sm font-medium text-gray-700 mb-1">DepEd Email</label>
-                <input type="email" id="deped_email" name="deped_email" value="juan.test@deped.gov.ph" readonly>
-                      </div>
+        <div>
+            <label for="employee_name">Employee Name</label>
+            <input type="text" id="employee_name" name="employee_name" readonly>
+        </div>
 
-            <!-- Username -->
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" id="username" name="username" placeholder="juandelacruz">
-            </div>
+        <div>
+            <label for="role_id">Account Role</label>
+            <select id="role_id" name="role_id" required>
+                <option value="">-- Select a Role --</option>
+                <option value="1">Admin</option>
+                <option value="2">Teaching</option>
+                <option value="3">Non-Teaching</option>
+            </select>
+        </div>
+                  
+        <div>
+            <label for="deped_email">DepEd Email</label>
+            <input type="email" id="deped_email" name="deped_email" readonly>
+        </div>
 
-            <!-- Temporary Password -->
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
-                <input type="password" id="password" name="password" placeholder="********">
-            </div>
+        <div>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="juandelacruz">
+        </div>
 
-            <!-- Buttons Layout -->
-            <div>
+        <div>
+            <label for="password">Temporary Password</label>
+            <input type="password" id="password" name="password" placeholder="********">
+        </div>
+
+        <div>
             <button id="closeCreateAccount" type="button">Close</button>
-                <button type="submit">Create Account</button>
-            </div>
+            <button type="submit">Create Account</button>
+        </div>
     </form>
-      </dialog>
+</dialog>
+
             </div>
             
              
@@ -1103,19 +1120,53 @@ closeBtn.addEventListener('click', () => {
 });
 
 
-  const createAccountDialog = document.getElementById('createAccountDialog');
-const openCreateAccountBtn = document.getElementById('openCreateAccount');
+//   const createAccountDialog = document.getElementById('createAccountDialog');
+// const openCreateAccountBtn = document.getElementById('openCreateAccount');
+// const closeCreateAccountBtn = document.getElementById('closeCreateAccount');
+
+// // Open the dialog when trigger is clicked
+// openCreateAccountBtn.addEventListener('click', () => {
+//   createAccountDialog.showModal(); 
+// });
+
+// // Close the dialog when close button is clicked
+// closeCreateAccountBtn.addEventListener('click', () => {
+//   createAccountDialog.close();
+// });
+
+const createAccountDialog = document.getElementById('createAccountDialog');
 const closeCreateAccountBtn = document.getElementById('closeCreateAccount');
 
-// Open the dialog when trigger is clicked
-openCreateAccountBtn.addEventListener('click', () => {
-  createAccountDialog.showModal(); 
+// 1. Listen for clicks on ALL "Create Account" buttons across the table
+document.querySelectorAll('.openCreateAccountBtn').forEach(button => {
+    button.addEventListener('click', function() {
+        // 2. Extract values from the clicked button's data attributes
+        const empId = this.getAttribute('data-id');
+        const empNumber = this.getAttribute('data-number');
+        const empName = this.getAttribute('data-name');
+        const empEmail = this.getAttribute('data-email');
+
+        // 3. Inject values straight into your dialog form fields
+        document.getElementById('modal_employee_id').value = empId;
+        document.getElementById('employee_number').value = empNumber;
+        document.getElementById('employee_name').value = empName;
+        document.getElementById('deped_email').value = empEmail;
+
+        // 4. Reset entry inputs from previous attempts
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('role_id').value = '';
+
+        // 5. Open the native HTML dialog box properly
+        createAccountDialog.showModal();
+    });
 });
 
-// Close the dialog when close button is clicked
+// 6. Close dialog handler
 closeCreateAccountBtn.addEventListener('click', () => {
-  createAccountDialog.close();
+    createAccountDialog.close();
 });
+
 
 //FILE UPLOAD
 const masterFileForm = document.getElementById('masterFileForm');
