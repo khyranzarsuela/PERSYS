@@ -124,7 +124,7 @@ $Accounts = $stmt->fetchAll();
     }
 
     .employees-submenu.is-open {
-      max-height: 120px; /* enough for 2 items */
+      max-height: 180px; /* enough for 3 items */
     }
 
     /* Sub-menu items */
@@ -1100,8 +1100,42 @@ dialog::backdrop {
             panel.classList.remove('is-active');
           }
         });
+
+        // Re-apply search filter whenever the panel changes
+        filterRows();
       });
     });
+
+    /* -- 3. SEARCH BAR ----------------------------------- */
+    // Filters rows in whichever panel is currently visible.
+    // Matches against every cell's text content, case-insensitive.
+
+    var searchInput = document.getElementById('empSearch');
+
+    function filterRows() {
+      var term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+      // Find the currently active panel
+      var activePanel = document.querySelector('.emp-panel.is-active');
+      if (!activePanel) return;
+
+      var rows = activePanel.querySelectorAll('tbody tr');
+
+      rows.forEach(function (row) {
+        // Skip the "no records" placeholder row
+        if (row.cells.length === 1) {
+          row.hidden = false;
+          return;
+        }
+
+        var text = row.textContent.toLowerCase();
+        row.hidden = term.length > 0 && !text.includes(term);
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', filterRows);
+    }
 
   })();
 
@@ -1156,6 +1190,29 @@ document.querySelectorAll('.openCreateAccountBtn').forEach(button => {
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
         document.getElementById('role_id').value = '';
+
+        // 5. Filter role options based on the employee's personnel type.
+        //    Teaching   → Admin (1) or Teaching Personnel (2)
+        //    Non-Teaching → Admin (1) or Non-Teaching Personnel (3)
+        var empType = this.getAttribute('data-type'); // "Teaching" or "Non-Teaching"
+        var roleSelect = document.getElementById('role_id');
+        var roleOptions = roleSelect.querySelectorAll('option');
+
+        roleOptions.forEach(function (opt) {
+            if (opt.value === '') {
+                // Always show the placeholder option
+                opt.hidden = false;
+            } else if (opt.value === '1') {
+                // Admin is always allowed for any employee type
+                opt.hidden = false;
+            } else if (opt.value === '2') {
+                // Teaching role — only for Teaching employees
+                opt.hidden = (empType !== 'Teaching');
+            } else if (opt.value === '3') {
+                // Non-Teaching role — only for Non-Teaching employees
+                opt.hidden = (empType !== 'Non-Teaching');
+            }
+        });
 
         // 5. Open the native HTML dialog box properly
         createAccountDialog.showModal();
