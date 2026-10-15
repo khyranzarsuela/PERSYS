@@ -1,53 +1,63 @@
-<?php 
-// 1. Start output buffering to prevent "headers already sent" white screens
-ob_start(); 
+<?php
+ob_start();
 
-require_once '../../session.php'; 
-require_once '../../database.php'; 
+require_once '../../session.php';
+require_once '../../database.php';
 
-start_app_session(); 
-require_admin(); 
+start_app_session();
+require_admin();
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") { 
-    $employee_id = trim($_POST["employee_id"] ?? "");
-    $role_id     = trim($_POST["role_id"] ?? ""); 
-    $username    = trim($_POST["username"] ?? ""); 
-    $password    = trim($_POST["password"] ?? ""); 
-
-    if ($employee_id === "" || $role_id === "" || $username === "" || $password === ""){ 
-        header("Location: adminEmployees.php?error=empty_fields");
-        exit;
-    } 
-
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    try {
-        $stmt = $connection->prepare(
-            "INSERT INTO accounts (employee_id, role_id, username, password_hash) VALUES (?, ?, ?, ?)"
-        ); 
-        
-        $stmt->bind_param("iiss", $employee_id, $role_id, $username, $hashed_password); 
-
-        // 2. Execute the insertion
-        $stmt->execute();
-        
-        // Close statements safely
-        $stmt->close(); 
-        $connection->close(); 
-        
-        // 3. Clear buffer and force the browser to redirect immediately
-        ob_end_clean();
-        header("Location: adminEmployees.php?registered=1"); 
-        exit; 
-
-    } catch (mysqli_sql_exception $e) {
-        // If it fails, clear buffer and redirect to an error state
-        ob_end_clean();
-        header("Location: adminEmployees.php?error=db_error"); 
-        exit;
-    }
-} else {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_end_clean();
-    header("Location: adminEmployees.php");
+    header('Location: adminEmployees.php');
+    exit;
+}
+
+$employee_id = trim($_POST['employee_id'] ?? '');
+$role_id     = trim($_POST['role_id']     ?? '');
+$username    = trim($_POST['username']    ?? '');
+$password    = trim($_POST['password']    ?? '');
+
+if ($employee_id === '' || $role_id === '' || $username === '' || $password === '') {
+    ob_end_clean();
+    header('Location: adminEmployees.php?error=empty_fields');
+    exit;
+}
+
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+try {
+    $pdo  = db();
+    $stmt = $pdo->prepare(
+        'INSERT INTO accounts (employee_id, role_id, username, password_hash) VALUES (:employee_id, :role_id, :username, :password_hash)'
+    );
+    $stmt->execute([
+        ':employee_id'   => (int) $employee_id,
+        ':role_id'       => (int) $role_id,
+        ':username'      => $username,
+        ':password_hash' => $hashed_password,
+    ]);
+
+    ob_end_clean();
+    header('Location: adminEmployees.php?registered=1');
+    exit;
+
+} catch (PDOException $e) {
+    $code = $e->getCode();
+    ob_end_clean();
+
+    if ($code == 23000) {
+        // Parse the driver-specific message to distinguish duplicate username vs duplicate employee
+        $msg = $e->getMessage();
+        if (stripos($msg, 'username') !== false) {
+            header('Location: adminEmployees.php?error=duplicate_username');
+        } elseif (stripos($msg, 'uq_accounts_employee') !== false || stripos($msg, 'employee_id') !== false) {
+            header('Location: adminEmployees.php?error=already_has_account');
+        } else {
+            header('Location: adminEmployees.php?error=duplicate_username');
+        }
+    } else {
+        header('Location: adminEmployees.php?error=db_error');
+    }
     exit;
 }

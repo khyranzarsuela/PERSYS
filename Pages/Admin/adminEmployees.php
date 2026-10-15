@@ -5,6 +5,24 @@ require_once '../../session.php';
 start_app_session();
 require_admin();
 
+$flashType    = '';
+$flashMessage = '';
+if (isset($_GET['added']) && $_GET['added'] === '1') {
+    $flashType = 'success';
+} elseif (isset($_GET['error'])) {
+    $flashType    = 'error';
+    $flashMessage = match($_GET['error']) {
+        'duplicate_employee_number' => 'An employee with that employee number already exists.',
+        'duplicate_email'           => 'An employee with that DepEd email already exists.',
+        'validation'                => htmlspecialchars($_GET['msg'] ?? 'Please check all required fields.'),
+        'db_error'                  => 'A database error occurred. Please try again.',
+        'duplicate_username'        => 'That username is already taken.',
+        'already_has_account'       => 'This employee already has an account.',
+        'empty_fields'              => 'All fields are required to create an account.',
+        default                     => 'An error occurred. Please try again.',
+    };
+}
+
 $pdo = db();
 
 
@@ -543,6 +561,113 @@ dialog::backdrop {
   cursor: not-allowed;
 }
 
+/* ── ADD EMPLOYEE MODAL ─────────────────────────────────────────────────── */
+dialog#addEmployeeDialog {
+  max-width: 680px;
+  width: 95%;
+  padding: 28px 28px 24px;
+}
+
+.add-emp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.add-emp-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.add-emp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-emp-field label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.add-emp-field input,
+.add-emp-field select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #D0C8B8;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.add-emp-field input:focus,
+.add-emp-field select:focus {
+  border-color: #6B0FBA;
+  box-shadow: 0 0 0 3px rgba(107,15,186,0.12);
+}
+
+.add-emp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-add-emp-submit {
+  background-color: #F5C518;
+  color: #1a1a1a;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-add-emp-submit:hover {
+  background-color: #e6b800;
+}
+
+.btn-add-emp-cancel {
+  background: transparent;
+  border: 1.5px solid #ccc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* ── FLASH BANNER ──────────────────────────────────────────────────────── */
+.flash-banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flash-banner.flash-error {
+  background-color: #fff1f1;
+  border: 1.5px solid #f5c6c6;
+  color: #b42318;
+}
+
+.flash-banner .flash-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: inherit;
+  line-height: 1;
+  padding: 0;
+}
+
   </style>
 </head>
 <body>
@@ -756,6 +881,13 @@ dialog::backdrop {
       <!-- Page content -->
       <main class="page-content employees-page" id="mainContent">
 
+<?php if ($flashType === 'error'): ?>
+<div class="flash-banner flash-error" role="alert" id="flashBanner">
+  <span><?php echo $flashMessage; ?></span>
+  <button type="button" class="flash-dismiss" aria-label="Dismiss" onclick="document.getElementById('flashBanner').remove()">&times;</button>
+</div>
+<?php endif; ?>
+
         <!-- ── TOOLBAR ──────────────────────────────────────── -->
         <div class="emp-toolbar" role="toolbar" aria-label="Employee actions">
 
@@ -834,7 +966,7 @@ dialog::backdrop {
                   <th>Step Increment</th>
                   <th>Date of Original Appointment</th>
                   <th>Date of Last Promotion</th>
-                  <th>Employee Number</th>
+                  <th>DepEd Email</th>
                 </tr>
               </thead>
                 <tbody>
@@ -882,7 +1014,7 @@ dialog::backdrop {
                   <th>Step Increment</th>
                   <th>Date of Original Appointment</th>
                   <th>Date of Last Promotion</th>
-                  <th>Employee Number</th>
+                  <th>DepEd Email</th>
                 </tr>
               </thead>
                 <tbody>
@@ -1026,6 +1158,103 @@ dialog::backdrop {
 
         </div>
         <!-- END RECORDS CARD -->
+
+<!-- ── ADD EMPLOYEE DIALOG ─────────────────────────────────────────────── -->
+<dialog id="addEmployeeDialog">
+  <h2>Add Employee</h2>
+  <p>Fill in the employee details below. All fields marked * are required.</p>
+
+  <form action="AddEmployees.php" method="POST" id="addEmployeeForm">
+    <div class="add-emp-grid">
+
+      <!-- Row 1: Last Name | First Name | Middle Name -->
+      <div class="add-emp-field">
+        <label for="ae_last_name">Last Name *</label>
+        <input type="text" id="ae_last_name" name="last_name" required autocomplete="off">
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_first_name">First Name *</label>
+        <input type="text" id="ae_first_name" name="first_name" required autocomplete="off">
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_middle_name">Middle Name</label>
+        <input type="text" id="ae_middle_name" name="middle_name" autocomplete="off">
+      </div>
+
+      <!-- Row 2: Employee Number | Personnel Type -->
+      <div class="add-emp-field">
+        <label for="ae_employee_number">Employee Number *</label>
+        <input type="text" id="ae_employee_number" name="employee_number" required placeholder="EMP-YYYY-XXXX" autocomplete="off">
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_personnel_type">Personnel Type *</label>
+        <select id="ae_personnel_type" name="personnel_type" required>
+          <option value="">-- Select --</option>
+          <option value="Teaching">Teaching</option>
+          <option value="Non-Teaching">Non-Teaching</option>
+        </select>
+      </div>
+
+      <!-- Row 3: Plantilla Item Number | Position -->
+      <div class="add-emp-field">
+        <label for="ae_plantilla">Plantilla Item No. *</label>
+        <input type="text" id="ae_plantilla" name="plantilla_item_number" required autocomplete="off">
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_position">Position *</label>
+        <input type="text" id="ae_position" name="position" required autocomplete="off">
+      </div>
+
+      <!-- Row 4: Salary Grade | Step Increment -->
+      <div class="add-emp-field">
+        <label for="ae_salary_grade">Salary Grade *</label>
+        <input type="number" id="ae_salary_grade" name="salary_grade" min="1" required>
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_step_increment">Step Increment *</label>
+        <input type="number" id="ae_step_increment" name="step_increment" min="1" required>
+      </div>
+
+      <!-- Row 5: Date of Original Appointment | Date of Last Promotion -->
+      <div class="add-emp-field">
+        <label for="ae_date_orig">Date of Original Appointment *</label>
+        <input type="date" id="ae_date_orig" name="date_original_appointment" required>
+      </div>
+      <div class="add-emp-field">
+        <label for="ae_date_promo">Date of Last Promotion</label>
+        <input type="date" id="ae_date_promo" name="date_last_promotion">
+      </div>
+
+      <!-- Row 6: DepEd Email (full width) -->
+      <div class="add-emp-field full-width">
+        <label for="ae_deped_email">DepEd Email *</label>
+        <input type="email" id="ae_deped_email" name="deped_email" required autocomplete="off">
+      </div>
+
+    </div>
+
+    <div class="add-emp-actions">
+      <button type="button" id="closeAddEmployee" class="btn-add-emp-cancel">Cancel</button>
+      <button type="submit" class="btn-add-emp-submit">Add Employee</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ── SUCCESS ADD DIALOG ──────────────────────────────────────────────── -->
+<dialog id="successAddDialog">
+  <div style="text-align:center; padding: 12px 0 8px;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24"
+         fill="none" stroke="#22a85a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         style="display:block;margin:0 auto 12px;">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>
+    <h2 style="margin:0 0 8px;">Employee Added</h2>
+    <p style="color:#555;margin:0 0 6px;">The employee has been successfully added and is now available in the employee records.</p>
+    <p style="color:#555;margin:0 0 20px;">You can now create an account for them from the Accounts tab.</p>
+    <button type="button" id="closeSuccessDialog" class="btn-add-emp-submit">Done</button>
+  </div>
+</dialog>
 
       </main>
     </div>
@@ -1682,7 +1911,46 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+/* ── ADD EMPLOYEE MODAL ──────────────────────────────────────────────── */
+var addEmpDialog   = document.getElementById('addEmployeeDialog');
+var openAddEmpBtn  = document.querySelector('.btn-add-employee');
+var closeAddEmpBtn = document.getElementById('closeAddEmployee');
+
+// Note: openAddEmpBtn matches the first .btn-add-employee (the toolbar "+ Add Employee" button).
+// The "Master File Upload" button uses id="openBtn" and is wired separately above.
+if (openAddEmpBtn && addEmpDialog) {
+    openAddEmpBtn.addEventListener('click', function() {
+        document.getElementById('addEmployeeForm').reset();
+        addEmpDialog.showModal();
+    });
+}
+if (closeAddEmpBtn) {
+    closeAddEmpBtn.addEventListener('click', function() {
+        addEmpDialog.close();
+    });
+}
+
+/* ── SUCCESS DIALOG CLOSE ────────────────────────────────────────────── */
+var closeSuccessBtn = document.getElementById('closeSuccessDialog');
+if (closeSuccessBtn) {
+    closeSuccessBtn.addEventListener('click', function() {
+        document.getElementById('successAddDialog').close();
+        var url = new URL(window.location.href);
+        url.searchParams.delete('added');
+        window.history.replaceState({}, '', url.toString());
+    });
+}
+
   </script>
+
+<?php if ($flashType === 'success'): ?>
+<script>
+  (function() {
+    var d = document.getElementById('successAddDialog');
+    if (d) d.showModal();
+  })();
+</script>
+<?php endif; ?>
 
 </body>
 </html>
