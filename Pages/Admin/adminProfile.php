@@ -56,6 +56,7 @@ $profile = $stmt->fetch();
   -->
   <link rel="stylesheet" href="../../styles/admin.css" />
   <link rel="stylesheet" href="../../styles/admin-profile.css" />
+   <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -145,7 +146,7 @@ $profile = $stmt->fetch();
 
           <!-- Transactions -->
           <li>
-            <a href="adminTransactions.html" class="nav-item">
+            <a href="adminTransactions.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <rect x="4" y="2" width="16" height="20" rx="2"/>
@@ -160,7 +161,7 @@ $profile = $stmt->fetch();
 
           <!-- Settings -->
           <li>
-            <a href="adminSettings.html" class="nav-item">
+            <a href="adminSettings.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="3"/>
@@ -396,7 +397,7 @@ $profile = $stmt->fetch();
         </section>
 
         <!-- ── Log Out button — bottom right ──────────── -->
-        <div class="profile-footer">
+       <div class="profile-footer">
           <button type="button" class="btn-logout">
             <!-- Log-out arrow icon -->
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -416,11 +417,20 @@ $profile = $stmt->fetch();
 
   </div>
   <!-- ── END APP SHELL ──────────────────────────────────── -->
-
-  <!--
-    admin.js handles: sidebar toggle, nav active state,
-    AND the profile password eye-toggle (guarded block at bottom).
-  -->
+  <div class="modal-overlay" id="logoutModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="logoutModalTitle">Log Out</h2>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to log out?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelLogoutBtn" class="btn-secondary">Cancel</button>
+        <button type="button" id="confirmLogoutBtn" class="btn-yellow">Log Out</button>
+      </div>
+    </div>
+  </div>
   <script src="../../scripts/admin.js"></script>
 </body>
 </html>

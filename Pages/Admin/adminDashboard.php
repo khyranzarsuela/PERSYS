@@ -201,7 +201,7 @@ $recentLeaveRequests = $stmt->fetchAll();
 
           <!-- Transactions -->
           <li>
-            <a href="adminTransactions.html" class="nav-item">
+            <a href="adminTransactions.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <!-- Receipt / transactions icon -->
                 <svg viewBox="0 0 24 24">
@@ -217,7 +217,7 @@ $recentLeaveRequests = $stmt->fetchAll();
 
           <!-- Settings -->
           <li>
-            <a href="adminSettings.html" class="nav-item">
+            <a href="adminSettings.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <!-- Gear icon -->
                 <svg viewBox="0 0 24 24">
