@@ -294,5 +294,6 @@ $recentLeaves = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
   </div>
 
   <script src="../../scripts/user.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

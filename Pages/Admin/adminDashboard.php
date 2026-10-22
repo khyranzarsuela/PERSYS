@@ -346,54 +346,40 @@ $recentLeaveRequests = $stmt->fetchAll();
           <!-- Notification items -->
           <ul class="notif-list">
 
-            <!-- Item 1 — Leave Request #05 -->
-
-            
-            <li class="notif-item">
-              <div class="notif-item-top">
-
-              <?php if (empty($recentLeaveRequests)): ?>
-
-    <div class="no-notifications">
-        No pending leave requests.
-    </div>
-
-<?php else: ?>
-
-    <?php foreach ($recentLeaveRequests as $request): ?>
-                <span class="notif-request-id"> Leave Request #<?= htmlspecialchars($request['request_number']) ?></span>
-                <span class="badge-pending"><?= htmlspecialchars($request['status']) ?></span>
-              </div>
-              <div class="notif-meta">
-                <p>
-                  <span> From:
-                <?= htmlspecialchars(
-                    $request['first_name'] . ' ' . $request['last_name']
-                ) ?></span>
-                  <strong>( <?= htmlspecialchars($request['personnel_type']) ?>)</strong>
+            <?php if (empty($recentLeaveRequests)): ?>
+              <li class="notif-item">
+                <p style="text-align:center; color: var(--clr-text-light); font-size: 0.875rem; padding: 8px 0;">
+                  No pending leave requests.
                 </p>
-                <div class="notif-meta-row">
-                  <span>Type: <?= htmlspecialchars($request['leave_type_name']) ?></span>
-                  <span>Date:  <?= date(
-                    'm/d/y',
-                    strtotime($request['start_datetime'])
-                ) ?></span>
+              </li>
+            <?php else: ?>
+              <?php foreach ($recentLeaveRequests as $request): ?>
+              <li class="notif-item">
+                <div class="notif-item-top">
+                  <span class="notif-request-id">Leave Request #<?= htmlspecialchars($request['request_number']) ?></span>
+                  <span class="badge-pending"><?= htmlspecialchars($request['status']) ?></span>
                 </div>
-              </div>
-              <a href="adminTransactions.php?request_id=<?= (int) $request['leave_request_id'] ?>" class="notif-link">
-                  <!-- Eye icon -->
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M1 12C2.73 7.89 7 4 12 4s9.27 3.89 11 8c-1.73 4.11-6 8-11 8S2.73 16.11 1 12Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                Click to view details & process →
-            </a>
+                <div class="notif-meta">
+                  <p>
+                    <span>From: <?= htmlspecialchars($request['first_name'] . ' ' . $request['last_name']) ?></span>
+                    <strong> (<?= htmlspecialchars($request['personnel_type']) ?>)</strong>
+                  </p>
+                  <div class="notif-meta-row">
+                    <span>Type: <?= htmlspecialchars($request['leave_type_name']) ?></span>
+                    <span>Date: <?= date('m/d/y', strtotime($request['start_datetime'])) ?></span>
+                  </div>
+                </div>
+                <a href="adminTransactions.php?request_id=<?= (int) $request['leave_request_id'] ?>" class="notif-link">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M1 12C2.73 7.89 7 4 12 4s9.27 3.89 11 8c-1.73 4.11-6 8-11 8S2.73 16.11 1 12Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  Click to view details &amp; process →
+                </a>
+              </li>
+              <?php endforeach; ?>
+            <?php endif; ?>
 
-             <?php endforeach; ?>
-
-<?php endif; ?>
-               
-            </li>
           </ul>
         </aside>
         <!-- ── END NOTIFICATIONS PANEL ────────────────── -->
@@ -406,5 +392,6 @@ $recentLeaveRequests = $stmt->fetchAll();
   <!-- ── END APP SHELL ──────────────────────────────────── -->
 
   <script src="../../scripts/admin.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

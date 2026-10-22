@@ -330,83 +330,118 @@
 })();
 
 /* ── SETTINGS PAGE — guard: #fontSizeSlider ───────────────── */
-(function () {
-  'use strict';
-  if (typeof $ === 'undefined') return;
-  if (!$('#fontSizeSlider').length) return;
+// /* ── GLOBAL ACCESSIBILITY SETTINGS ──────────────────────── */
+// (function () {
+//   'use strict';
 
-  var saveTimer = null;
+//   if (typeof $ === 'undefined') return;
 
-  function debounce(fn, delay) {
-    return function () {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(fn, delay);
-    };
-  }
+//   // Apply the saved font size on every page.
+//   function applyFontSize(size) {
+//     var num = parseInt(size, 10);
 
-  // Font size slider
-  $('#fontSizeSlider').on('input', function () {
-    var val = $(this).val();
-    $('#fontSizeVal').text(val + 'px');
-    debounce(function () {
-      $.post(window.location.href, { ajax_save_font_size: 1, font_size: val + 'px' });
-    }, 600)();
-  });
+//     if (isNaN(num) || num < 10 || num > 32) return;
 
-  // Brightness slider → localStorage
-  $('#brightnessSlider').on('input', function () {
-    localStorage.setItem('persys_brightness', $(this).val());
-  });
+//     document.documentElement.style.setProperty(
+//       '--persys-font-size',
+//       num + 'px'
+//     );
+//   }
 
-  // Text spacing slider → localStorage
-  $('#textSpacingSlider').on('input', function () {
-    localStorage.setItem('persys_text_spacing', $(this).val());
-  });
+//   // Restore the saved font size on every page.
+//   var savedFontSize = localStorage.getItem('persys_font_size');
 
-  // Mode options
-  $('.mode-option').on('click', function () {
-    $('.mode-option').removeClass('selected');
-    $(this).addClass('selected');
-    localStorage.setItem('persys_color_mode', $(this).data('mode'));
-  });
+//   if (savedFontSize !== null) {
+//     applyFontSize(savedFontSize);
+//   }
 
-  // Toggle switches → localStorage
-  $(document).on('change', '.pref-toggle', function () {
-    localStorage.setItem('persys_toggle_' + $(this).attr('id'), $(this).is(':checked') ? '1' : '0');
-  });
+//   // The remaining settings-page controls only run on Settings.
+//   if (!$('#fontSizeSlider').length) return;
 
-  // Restore all preferences on load
-  $(document).ready(function () {
-    // Font size
-    var fs = localStorage.getItem('persys_font_size');
-    if (fs) {
-      var num = parseInt(fs, 10);
-      if (!isNaN(num)) {
-        $('#fontSizeSlider').val(num);
-        $('#fontSizeVal').text(num + 'px');
-      }
-    }
+//   var saveTimer = null;
 
-    // Brightness
-    var bv = localStorage.getItem('persys_brightness');
-    if (bv !== null) $('#brightnessSlider').val(bv);
+//   function debounce(fn, delay) {
+//     return function () {
+//       clearTimeout(saveTimer);
+//       saveTimer = setTimeout(fn, delay);
+//     };
+//   }
 
-    // Text spacing
-    var ts = localStorage.getItem('persys_text_spacing');
-    if (ts !== null) $('#textSpacingSlider').val(ts);
+//   // Font size slider
+//  $('#fontSizeSlider').on('input', function () {
+//   var val = $(this).val();
 
-    // Mode option
-    var mode = localStorage.getItem('persys_color_mode');
-    if (mode) {
-      $('.mode-option').removeClass('selected');
-      $('.mode-option[data-mode="' + mode + '"]').addClass('selected');
-    }
+//   $('#fontSizeVal').text(val + 'px');
 
-    // Toggle switches
-    $('.pref-toggle').each(function () {
-      var stored = localStorage.getItem('persys_toggle_' + $(this).attr('id'));
-      if (stored !== null) $(this).prop('checked', stored === '1');
-    });
-  });
+//   // Save locally so every page can restore the setting.
+//   localStorage.setItem('persys_font_size', val);
 
-})();
+//   // Apply immediately on the Settings page.
+//   applyFontSize(val);
+
+//   // Keep the existing PHP save request.
+//   debounce(function () {
+//     $.post(window.location.href, {
+//       ajax_save_font_size: 1,
+//       font_size: val + 'px'
+//     });
+//   }, 600)();
+// });
+
+//   // Brightness slider → localStorage
+//   $('#brightnessSlider').on('input', function () {
+//     localStorage.setItem('persys_brightness', $(this).val());
+//   });
+
+//   // Text spacing slider → localStorage
+//   $('#textSpacingSlider').on('input', function () {
+//     localStorage.setItem('persys_text_spacing', $(this).val());
+//   });
+
+//   // Mode options
+//   $('.mode-option').on('click', function () {
+//     $('.mode-option').removeClass('selected');
+//     $(this).addClass('selected');
+//     localStorage.setItem('persys_color_mode', $(this).data('mode'));
+//   });
+
+//   // Toggle switches → localStorage
+//   $(document).on('change', '.pref-toggle', function () {
+//     localStorage.setItem('persys_toggle_' + $(this).attr('id'), $(this).is(':checked') ? '1' : '0');
+//   });
+
+//   // Restore all preferences on load
+//   $(document).ready(function () {
+//     // Font size
+//     var fs = localStorage.getItem('persys_font_size');
+//     if (fs) {
+//       var num = parseInt(fs, 10);
+//       if (!isNaN(num)) {
+//         $('#fontSizeSlider').val(num);
+//         $('#fontSizeVal').text(num + 'px');
+//       }
+//     }
+
+//     // Brightness
+//     var bv = localStorage.getItem('persys_brightness');
+//     if (bv !== null) $('#brightnessSlider').val(bv);
+
+//     // Text spacing
+//     var ts = localStorage.getItem('persys_text_spacing');
+//     if (ts !== null) $('#textSpacingSlider').val(ts);
+
+//     // Mode option
+//     var mode = localStorage.getItem('persys_color_mode');
+//     if (mode) {
+//       $('.mode-option').removeClass('selected');
+//       $('.mode-option[data-mode="' + mode + '"]').addClass('selected');
+//     }
+
+//     // Toggle switches
+//     $('.pref-toggle').each(function () {
+//       var stored = localStorage.getItem('persys_toggle_' + $(this).attr('id'));
+//       if (stored !== null) $(this).prop('checked', stored === '1');
+//     });
+//   });
+
+// })();

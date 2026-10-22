@@ -387,5 +387,6 @@ $profile = $stmt->fetch();
   </div>
 
   <script src="../../scripts/user.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

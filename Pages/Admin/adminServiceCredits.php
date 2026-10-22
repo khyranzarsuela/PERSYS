@@ -6,45 +6,63 @@ require_admin();
 
 $pdo = db();
 
-// 1. Change ->query() to ->prepare()
+// 1. prepare()
 $localCreditsStatement = $pdo->prepare("
-    SELECT COALESCE(SUM(sct.credit_amount), 0) AS total_local_credits 
-    FROM service_credit_transactions sct 
-    INNER JOIN service_credit_types sctt ON sct.credit_type_id = sctt.credit_type_id 
-    WHERE sct.employee_id = ? 
-      AND sctt.credit_type_name = 'LOCAL' 
-      AND sct.transaction_type = 'EARNED'
+    SELECT COALESCE(
+        SUM(
+            CASE
+                WHEN transaction_type = 'EARNED'
+                    THEN credit_amount
+                WHEN transaction_type = 'DEDUCTED'
+                    THEN -credit_amount
+                ELSE 0
+            END
+        ), 0
+    ) AS total_local_credits
+    FROM service_credit_transactions
+    WHERE employee_id = ?
+      AND credit_type_id = 1
 ");
 
 // 2. Use the correct variable name ($localCreditsStatement) to execute
-$localCreditsStatement->execute([ 
-  $_SESSION['employee_id'] 
+$localCreditsStatement->execute([
+    $_SESSION['employee_id']
 ]);
 
 // 3. Fetch the result
 $result = $localCreditsStatement->fetch(PDO::FETCH_ASSOC);
-$totalLocalCredits = $result['total_local_credits'];
 
+$totalLocalCredits = (float) $result['total_local_credits'];
 
 
 
 $nationalCreditsStatement = $pdo->prepare("
-  SELECT COALESCE(SUM(sct.credit_amount), 0) AS total_national_credits
-FROM service_credit_transactions sct
-INNER JOIN service_credit_types sctt
-    ON sct.credit_type_id = sctt.credit_type_id
-WHERE sct.employee_id = ?
-  AND sctt.credit_type_name = 'NATIONAL'
-  AND sct.transaction_type = 'EARNED'
+    SELECT COALESCE(
+        SUM(
+            CASE
+                WHEN transaction_type = 'EARNED'
+                    THEN credit_amount
+                WHEN transaction_type = 'DEDUCTED'
+                    THEN -credit_amount
+                ELSE 0
+            END
+        ), 0
+    ) AS total_national_credits
+    FROM service_credit_transactions
+    WHERE employee_id = ?
+      AND credit_type_id = 2
 ");
 
 $nationalCreditsStatement->execute([
-  $_SESSION['employee_id']
+    $_SESSION['employee_id']
 ]);
 
 $result = $nationalCreditsStatement->fetch(PDO::FETCH_ASSOC);
-$totalNationalCredits = $result['total_national_credits'];
 
+$totalNationalCredits = (float) $result['total_national_credits'];
+
+
+//upload Service Credit Records Count
 $uploadServiceStatement = $pdo->query("
     SELECT COUNT(*) AS total_upload_records
     FROM service_credit_transactions
@@ -985,12 +1003,12 @@ $uploadHistory = $historyStatement->fetchAll();
 
           <div class="sc-stat-card">
             <p class="sc-stat-label">Local Service Credits</p>
-            <p class="sc-stat-number"><?= $totalLocalCredits; ?></p>
+            <p class="sc-stat-number"><?= number_format((float) $totalLocalCredits, 2); ?></p>
           </div>
 
           <div class="sc-stat-card">
             <p class="sc-stat-label">National Service Credits</p>
-            <p class="sc-stat-number"><?= $totalNationalCredits; ?></p>
+            <p class="sc-stat-number"><?= number_format((float) $totalNationalCredits, 2); ?></p>
           </div>
 
           <div class="sc-stat-card">
@@ -1242,6 +1260,7 @@ $uploadHistory = $historyStatement->fetchAll();
 
   <!-- Shared admin JS -->
   <script src="../../scripts/admin.js"></script>
+  <script src="../../scripts/settings.js"></script>
 
   <!-- ============================================================
        PAGE-SCOPED JS — adminServiceCredits.html

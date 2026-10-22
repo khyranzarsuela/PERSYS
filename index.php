@@ -55,20 +55,20 @@ if (isset($_SESSION['login_error'])) {
 
         <form action="handleLogin.php" method="POST" id="loginForm" class="login-form" novalidate>
 
-          <!-- Email field -->
-          <div class="field-group" id="emailGroup">
-            <label class="field-label" for="email">Email</label>
-            <input
+          <!-- Login field -->
+          <div class="field-group" id="loginGroup">
+            <label class="field-label" for="login">Email or Username</label>
+           <input
+              type="text"
               class="field-input"
-              type="email"
-              id="email"
-              name="depedEmail"
-              placeholder="john.doe@gmail.com"
-              autocomplete="email"
-              required
-            />
+              name="login"
+              id="login"
+              placeholder="Email or Username"
+              autocomplete="username"
+              required>
+
             <!-- Inline error message (hidden by default) -->
-            <span class="field-error" id="emailError" role="alert"></span>
+            <span class="field-error" id="loginError" role="alert"></span>
           </div>
 
           <!-- Password field -->

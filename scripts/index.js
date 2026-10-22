@@ -10,12 +10,14 @@
 
   // ── Element references ──────────────────────────────────
   const loginForm      = document.getElementById('loginForm');
-  const emailInput     = document.getElementById('email');
-  const emailGroup     = document.getElementById('emailGroup');
-  const emailError     = document.getElementById('emailError');
+  const loginInput     = document.getElementById('login');
+  const loginGroup     = document.getElementById('loginGroup');
+  const loginError     = document.getElementById('loginError');
+
   const passwordInput  = document.getElementById('password');
   const passwordGroup  = document.getElementById('passwordGroup');
   const passwordError  = document.getElementById('passwordError');
+
   const togglePassword = document.getElementById('togglePassword');
 
   // Exit safely if the form is missing on this specific page load
@@ -25,17 +27,17 @@
   if (togglePassword) {
     togglePassword.addEventListener('click', function () {
       const isHidden = passwordInput.type === 'password';
+
       passwordInput.type = isHidden ? 'text' : 'password';
+
       this.classList.toggle('is-visible', isHidden);
       this.setAttribute('aria-pressed', String(isHidden));
+
       passwordInput.focus();
     });
   }
 
   // ── 2. VALIDATION HELPERS ─────────────────────────────
-  function isValidEmail(value) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-  }
 
   function showError(group, errorEl, message) {
     group.classList.add('has-error');
@@ -48,78 +50,142 @@
   }
 
   // ── 3. REAL-TIME VALIDATION (on blur) ──────────────────
-  emailInput.addEventListener('blur', function () {
+
+  /*
+   * Login can be either:
+   * - Email
+   * - Username
+   *
+   * Therefore, we only require that the field
+   * contains a value.
+   */
+  loginInput.addEventListener('blur', function () {
     const val = this.value.trim();
+
     if (val === '') {
-      showError(emailGroup, emailError, 'Email is required.');
-    } else if (!isValidEmail(val)) {
-      showError(emailGroup, emailError, 'Please enter a valid email address.');
+      showError(
+        loginGroup,
+        loginError,
+        'Email or username is required.'
+      );
     } else {
-      clearError(emailGroup, emailError);
+      clearError(loginGroup, loginError);
     }
   });
 
-  emailInput.addEventListener('input', function () {
-    if (emailGroup.classList.contains('has-error')) {
+  loginInput.addEventListener('input', function () {
+    if (loginGroup.classList.contains('has-error')) {
       const val = this.value.trim();
-      if (isValidEmail(val)) clearError(emailGroup, emailError);
+
+      if (val !== '') {
+        clearError(loginGroup, loginError);
+      }
     }
   });
+
+  // ── PASSWORD VALIDATION ────────────────────────────────
 
   passwordInput.addEventListener('blur', function () {
     if (this.value === '') {
-      showError(passwordGroup, passwordError, 'Password is required.');
+      showError(
+        passwordGroup,
+        passwordError,
+        'Password is required.'
+      );
     } else if (this.value.length < 6) {
-      showError(passwordGroup, passwordError, 'Password must be at least 6 characters.');
+      showError(
+        passwordGroup,
+        passwordError,
+        'Password must be at least 6 characters.'
+      );
     } else {
       clearError(passwordGroup, passwordError);
     }
   });
 
   passwordInput.addEventListener('input', function () {
-    if (passwordGroup.classList.contains('has-error') && this.value.length >= 6) {
+    if (
+      passwordGroup.classList.contains('has-error') &&
+      this.value.length >= 6
+    ) {
       clearError(passwordGroup, passwordError);
     }
   });
 
   // ── 4. SUBMIT VALIDATION ───────────────────────────────
+
   loginForm.addEventListener('submit', function (e) {
-    // 1. Temporarily pause the submission to let JavaScript evaluate inputs
-    e.preventDefault(); 
+
+    // Temporarily stop normal form submission
+    // while JavaScript validates the fields.
+    e.preventDefault();
 
     let isValid = true;
 
-    // Validate email
-    const emailVal = emailInput.value.trim();
-    if (emailVal === '') {
-      showError(emailGroup, emailError, 'Email is required.');
+    // ── Validate Email / Username ─────────────────────────
+
+    const loginVal = loginInput.value.trim();
+
+    if (loginVal === '') {
+
+      showError(
+        loginGroup,
+        loginError,
+        'Email or username is required.'
+      );
+
       isValid = false;
-    } else if (!isValidEmail(emailVal)) {
-      showError(emailGroup, emailError, 'Please enter a valid email address.');
-      isValid = false;
+
     } else {
-      clearError(emailGroup, emailError);
+
+      clearError(loginGroup, loginError);
     }
 
-    // Validate password
+    // ── Validate Password ─────────────────────────────────
+
     if (passwordInput.value === '') {
-      showError(passwordGroup, passwordError, 'Password is required.');
+
+      showError(
+        passwordGroup,
+        passwordError,
+        'Password is required.'
+      );
+
       isValid = false;
+
     } else if (passwordInput.value.length < 6) {
-      showError(passwordGroup, passwordError, 'Password must be at least 6 characters.');
+
+      showError(
+        passwordGroup,
+        passwordError,
+        'Password must be at least 6 characters.'
+      );
+
       isValid = false;
+
     } else {
+
       clearError(passwordGroup, passwordError);
     }
 
-    // If any field is invalid, cancel submission and focus field
+    // ── Stop if validation failed ─────────────────────────
+
     if (!isValid) {
-      const firstError = loginForm.querySelector('.has-error .field-input');
-      if (firstError) firstError.focus();
+
+      const firstError =
+        loginForm.querySelector('.has-error .field-input');
+
+      if (firstError) {
+        firstError.focus();
+      }
+
       return;
     }
 
-    // 2. FIXED: If everything passes JavaScript validation, submit directly to PHP!
+    // ── Everything is valid ──────────────────────────────
+    //
+    // Send the form normally to handleLogin.php.
+    //
     loginForm.submit();
   });
 

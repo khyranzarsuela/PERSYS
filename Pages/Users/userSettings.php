@@ -6,34 +6,82 @@ require_user();
 $pdo       = db();
 $accountId = (int) $_SESSION['account_id'];
 
-// AJAX: save font size
+// ── AJAX: save settings ───────────────────────────────────────────────────────
+
+// Save font size
 if (!empty($_POST['ajax_save_font_size'])) {
     $fontSizeRaw = trim($_POST['font_size'] ?? '16px');
-    // Validate: allow only "NNpx" format, 12px–24px
     if (preg_match('/^(1[2-9]|2[0-4])px$/', $fontSizeRaw)) {
-        $stmtUpsert = $pdo->prepare(
+        $pdo->prepare(
             "INSERT INTO account_settings (account_id, font_size)
              VALUES (?, ?)
              ON DUPLICATE KEY UPDATE font_size = ?"
-        );
-        $stmtUpsert->execute([$accountId, $fontSizeRaw, $fontSizeRaw]);
+        )->execute([$accountId, $fontSizeRaw, $fontSizeRaw]);
     }
     exit;
 }
 
-// Load saved font size
-$stmtFS = $pdo->prepare("SELECT font_size FROM account_settings WHERE account_id = ?");
-$stmtFS->execute([$accountId]);
-$savedFontSize    = $stmtFS->fetchColumn() ?: '16px';
+// Save text spacing
+if (!empty($_POST['ajax_save_text_spacing'])) {
+    $spacingRaw = (float) ($_POST['text_spacing'] ?? 0);
+    $spacing    = max(0, min(5, $spacingRaw));
+    $pdo->prepare(
+        "INSERT INTO account_settings (account_id, text_spacing)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE text_spacing = ?"
+    )->execute([$accountId, $spacing, $spacing]);
+    exit;
+}
+
+// Save dark mode
+if (!empty($_POST['ajax_save_dark_mode'])) {
+    $darkMode = ($_POST['dark_mode'] ?? '0') === '1' ? 1 : 0;
+    $pdo->prepare(
+        "INSERT INTO account_settings (account_id, dark_mode)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE dark_mode = ?"
+    )->execute([$accountId, $darkMode, $darkMode]);
+    exit;
+}
+
+// ── Load all saved preferences ────────────────────────────────────────────────
+$stmtPrefs = $pdo->prepare(
+    "SELECT font_size, text_spacing, dark_mode
+     FROM account_settings WHERE account_id = ?"
+);
+$stmtPrefs->execute([$accountId]);
+$prefs = $stmtPrefs->fetch() ?: [];
+
+$savedFontSize    = $prefs['font_size']    ?? '16px';
 $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT);
+$savedTextSpacing = (float) ($prefs['text_spacing'] ?? 0);
+$savedDarkMode    = (int)   ($prefs['dark_mode']    ?? 0);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="<?= $savedDarkMode ? 'dark' : 'light' ?>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BCSHS-SAC | Settings</title>
   <link rel="stylesheet" href="../../styles/user.css" />
+  <!-- Apply saved preferences before first paint to prevent flash -->
+  <script>
+    (function () {
+      var fs = <?= $savedFontSizeNum ?>;
+      var sp = <?= $savedTextSpacing ?>;
+      var dm = <?= $savedDarkMode ?>;
+      var r  = document.documentElement;
+      r.style.setProperty('--app-font-size',       fs + 'px');
+      r.style.setProperty('--persys-font-size',    fs + 'px');
+      r.style.setProperty('--app-letter-spacing',  sp + 'px');
+      r.style.setProperty('--app-line-height',     String(1.5 + sp * 0.05));
+      r.dataset.theme = dm ? 'dark' : 'light';
+      // Seed localStorage so other pages restore instantly
+      localStorage.setItem('persysFontSize',    String(fs));
+      localStorage.setItem('persysTextSpacing', String(sp));
+      localStorage.setItem('persysTheme',       dm ? 'dark' : 'light');
+    })();
+  </script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"
           integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
           crossorigin="anonymous"></script>
@@ -138,14 +186,16 @@ $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT)
             <!-- Mode options -->
             <div class="settings-row">
               <div class="mode-options-row">
-                <div class="mode-option selected" data-mode="light">
-                  <div class="mode-radio"></div>
+                <button type="button" class="mode-option <?= !$savedDarkMode ? 'selected' : '' ?>"
+                        data-mode="light" aria-pressed="<?= !$savedDarkMode ? 'true' : 'false' ?>">
+                  <span class="mode-radio"></span>
                   Light Mode
-                </div>
-                <div class="mode-option" data-mode="dark">
-                  <div class="mode-radio"></div>
+                </button>
+                <button type="button" class="mode-option <?= $savedDarkMode ? 'selected' : '' ?>"
+                        data-mode="dark" aria-pressed="<?= $savedDarkMode ? 'true' : 'false' ?>">
+                  <span class="mode-radio"></span>
                   Dark Mode
-                </div>
+                </button>
               </div>
             </div>
 
@@ -178,17 +228,28 @@ $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT)
                 <span class="val-display" id="fontSizeVal"><?= $savedFontSizeNum ?>px</span>
               </label>
               <input type="range" id="fontSizeSlider"
-                     min="12" max="24"
+                     min="12" max="24" step="4"
                      value="<?= $savedFontSizeNum ?>"
                      data-saved="<?= $savedFontSizeNum ?>" />
+              <div class="range-labels" aria-hidden="true">
+                <span>Small</span><span>Medium</span><span>Large</span>
+              </div>
             </div>
 
             <div class="settings-divider"></div>
 
             <!-- Text Spacing -->
             <div class="settings-row">
-              <label class="settings-label" for="textSpacingSlider">Text Spacing</label>
-              <input type="range" id="textSpacingSlider" min="0" max="10" value="0" />
+              <label class="settings-label" for="textSpacingSlider">
+                Text Spacing
+                <span class="val-display" id="textSpacingVal"><?= $savedTextSpacing ?>px</span>
+              </label>
+              <input type="range" id="textSpacingSlider"
+                     min="0" max="5" step="0.5"
+                     value="<?= $savedTextSpacing ?>" />
+              <div class="range-labels" aria-hidden="true">
+                <span>Default</span><span>Wide</span><span>Wider</span>
+              </div>
             </div>
 
             <div class="settings-divider"></div>
@@ -252,5 +313,6 @@ $savedFontSizeNum = (int) filter_var($savedFontSize, FILTER_SANITIZE_NUMBER_INT)
   </div>
 
   <script src="../../scripts/user.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

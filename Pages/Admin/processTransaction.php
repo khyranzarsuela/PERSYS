@@ -24,12 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ]);
 }
 
-$action = $_POST['action'] ?? '';
 $requestId = filter_var(
     $_POST['request_id'] ?? null,
     FILTER_VALIDATE_INT
 );
 
+$targetStatus = $_POST['target_status'] ?? '';
 $adminId = $_SESSION['account_id'] ?? null;
 
 if (!$adminId || !$requestId || $requestId < 1) {
@@ -39,16 +39,16 @@ if (!$adminId || !$requestId || $requestId < 1) {
     ]);
 }
 
-if (!in_array($action, ['approve', 'reject'], true)) {
+if (!in_array($targetStatus, ['Approved', 'Rejected'], true)) {
     respond(400, [
         'success' => false,
-        'message' => 'Invalid action.'
+        'message' => 'Choose Approved or Rejected.'
     ]);
 }
 
 $creditTypeId = null;
 
-if ($action === 'approve') {
+if ($targetStatus === 'Approved') {
     $creditTypeId = filter_var(
         $_POST['credit_type_id'] ?? null,
         FILTER_VALIDATE_INT
@@ -57,7 +57,7 @@ if ($action === 'approve') {
     if (!in_array($creditTypeId, [1, 2], true)) {
         respond(400, [
             'success' => false,
-            'message' => 'Please select Local or National Service Credits.'
+            'message' => 'Select Local or National Service Credits.'
         ]);
     }
 }
@@ -65,7 +65,7 @@ if ($action === 'approve') {
 try {
     $pdo->beginTransaction();
 
-    // Lock the request so it cannot be processed twice.
+    // Lock this request to prevent concurrent finalization.
     $stmt = $pdo->prepare("
         SELECT
             lr.*,
@@ -81,7 +81,7 @@ try {
     ");
 
     $stmt->execute([$requestId]);
-    $request = $stmt->fetch();
+    $request = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$request) {
         $pdo->rollBack();
@@ -97,11 +97,12 @@ try {
 
         respond(409, [
             'success' => false,
-            'message' => 'This request has already been processed.'
+            'message' => 'Only Pending requests can be finalized.'
         ]);
     }
 
-    if ($action === 'reject') {
+    // Rejection: record the official decision without a deduction.
+    if ($targetStatus === 'Rejected') {
         $stmt = $pdo->prepare("
             UPDATE leave_requests
             SET status = 'Rejected',
@@ -115,7 +116,7 @@ try {
 
         if ($stmt->rowCount() !== 1) {
             throw new RuntimeException(
-                'The request could not be rejected.'
+                'The request could not be marked Rejected.'
             );
         }
 
@@ -124,11 +125,11 @@ try {
         respond(200, [
             'success' => true,
             'status' => 'Rejected',
-            'message' => 'Leave request rejected successfully.'
+            'message' => 'Status updated to Rejected. No service credits were deducted.'
         ]);
     }
 
-    // Serialize balance checks for the same employee.
+    // Approval: serialize credit-balance changes for this employee.
     $stmt = $pdo->prepare("
         SELECT employee_id
         FROM employees
@@ -142,7 +143,7 @@ try {
         throw new RuntimeException('Employee record not found.');
     }
 
-    // Calculate the chosen credit pool's current balance.
+    // Calculate the chosen pool's current balance.
     $stmt = $pdo->prepare("
         SELECT COALESCE(
             SUM(
@@ -171,7 +172,7 @@ try {
 
     if ($leaveDays <= 0) {
         throw new RuntimeException(
-            'The leave request has an invalid number of days.'
+            'The request has an invalid number of leave days.'
         );
     }
 
@@ -188,11 +189,11 @@ try {
         ]);
     }
 
-    // Save the pool selection on the leave request.
+    // Save the official decision and selected pool.
     $stmt = $pdo->prepare("
         UPDATE leave_requests
-        SET credit_type_id = ?,
-            status = 'Approved',
+        SET status = 'Approved',
+            credit_type_id = ?,
             reviewed_by = ?,
             reviewed_at = NOW()
         WHERE leave_request_id = ?
@@ -207,11 +208,11 @@ try {
 
     if ($stmt->rowCount() !== 1) {
         throw new RuntimeException(
-            'The request could not be approved.'
+            'The request could not be marked Approved.'
         );
     }
 
-    // Record the deduction as a positive amount with type DEDUCTED.
+    // Record exactly one deduction as part of this transaction.
     $stmt = $pdo->prepare("
         INSERT INTO service_credit_transactions (
             employee_id,
@@ -250,7 +251,7 @@ try {
         'balance' => $balance,
         'deduction' => $leaveDays,
         'remaining_balance' => $remainingBalance,
-        'message' => 'Leave request approved and service credits deducted successfully.'
+        'message' => 'Status updated to Approved and service credits deducted successfully.'
     ]);
 
 } catch (Throwable $e) {
@@ -258,10 +259,10 @@ try {
         $pdo->rollBack();
     }
 
-    error_log('Transaction processing error: ' . $e->getMessage());
+    error_log('Transaction status update error: ' . $e->getMessage());
 
     respond(500, [
         'success' => false,
-        'message' => 'The transaction could not be completed. Please try again.'
+        'message' => 'The status could not be updated. Please try again.'
     ]);
 }

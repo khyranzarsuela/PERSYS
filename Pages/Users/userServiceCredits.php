@@ -4,26 +4,67 @@ start_app_session();
 require_user();
 
 $pdo   = db();
-$empId = (int) $_SESSION['employee_id'];
 
-// Balance helper
-function scBalance(PDO $pdo, int $empId, int $typeId): float {
-    $s = $pdo->prepare(
-        "SELECT
-            COALESCE(SUM(CASE WHEN transaction_type='EARNED'   THEN credit_amount ELSE 0 END), 0)
-          - COALESCE(SUM(CASE WHEN transaction_type='DEDUCTED' THEN credit_amount ELSE 0 END), 0)
-         FROM service_credit_transactions
-         WHERE employee_id = ? AND credit_type_id = ?"
-    );
-    $s->execute([$empId, $typeId]);
-    return (float) $s->fetchColumn();
-}
-$localBalance    = scBalance($pdo, $empId, 1);
-$nationalBalance = scBalance($pdo, $empId, 2);
+// 1. prepare()
+$localCreditsStatement = $pdo->prepare("
+    SELECT COALESCE(
+        SUM(
+            CASE
+                WHEN transaction_type = 'EARNED'
+                    THEN credit_amount
+                WHEN transaction_type = 'DEDUCTED'
+                    THEN -credit_amount
+                ELSE 0
+            END
+        ), 0
+    ) AS total_local_credits
+    FROM service_credit_transactions
+    WHERE employee_id = ?
+      AND credit_type_id = 1
+");
+
+// 2. Use the correct variable name ($localCreditsStatement) to execute
+$localCreditsStatement->execute([
+    $_SESSION['employee_id']
+]);
+
+// 3. Fetch the result
+$result = $localCreditsStatement->fetch(PDO::FETCH_ASSOC);
+
+$totalLocalCredits = (float) $result['total_local_credits'];
+
+
+
+$nationalCreditsStatement = $pdo->prepare("
+    SELECT COALESCE(
+        SUM(
+            CASE
+                WHEN transaction_type = 'EARNED'
+                    THEN credit_amount
+                WHEN transaction_type = 'DEDUCTED'
+                    THEN -credit_amount
+                ELSE 0
+            END
+        ), 0
+    ) AS total_national_credits
+    FROM service_credit_transactions
+    WHERE employee_id = ?
+      AND credit_type_id = 2
+");
+
+$nationalCreditsStatement->execute([
+    $_SESSION['employee_id']
+]);
+
+$result = $nationalCreditsStatement->fetch(PDO::FETCH_ASSOC);
+
+$totalNationalCredits = (float) $result['total_national_credits'];
+
+
 
 // All transactions for this employee
 $stmtTx = $pdo->prepare(
-    "SELECT sct.transaction_id, sct.activity_name, sct.activity_date,
+    "SELECT sct.transaction_id, sct.activity_name, sct.activity_start_date, sct.activity_end_date,
             sct.credit_amount, sct.transaction_type, sct.created_at,
             sty.credit_type_name
      FROM service_credit_transactions sct
@@ -31,7 +72,7 @@ $stmtTx = $pdo->prepare(
      WHERE sct.employee_id = ?
      ORDER BY sct.created_at DESC"
 );
-$stmtTx->execute([$empId]);
+$stmtTx->execute([$_SESSION['employee_id']]);
 $transactions = $stmtTx->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -142,11 +183,11 @@ $transactions = $stmtTx->fetchAll(PDO::FETCH_ASSOC);
         <div class="credit-balance-cards">
           <div class="credit-balance-card">
             <div class="credit-balance-card-title">Local Service Credits</div>
-            <div class="credit-balance-number"><?= number_format($localBalance, 2) ?></div>
+            <div class="credit-balance-number"><?= number_format($totalLocalCredits, 2) ?></div>
           </div>
           <div class="credit-balance-card">
             <div class="credit-balance-card-title">National Service Credits</div>
-            <div class="credit-balance-number"><?= number_format($nationalBalance, 2) ?></div>
+            <div class="credit-balance-number"><?= number_format($totalNationalCredits, 2) ?></div>
           </div>
         </div>
 
@@ -211,5 +252,6 @@ $transactions = $stmtTx->fetchAll(PDO::FETCH_ASSOC);
   </div>
 
   <script src="../../scripts/user.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

@@ -79,7 +79,10 @@ $myRequests = $stmtReqs->fetchAll(PDO::FETCH_ASSOC);
 
 // ── Fetch active leave types ────────────────────────────────
 $stmtLT = $pdo->prepare(
-    "SELECT leave_type_id, leave_type_name FROM leave_types WHERE is_active = 1 ORDER BY leave_type_name"
+    "SELECT leave_type_id, leave_type_name 
+    FROM leave_types 
+    WHERE is_active = 1
+    ORDER BY leave_type_id ASC" 
 );
 $stmtLT->execute([]);
 $leaveTypes = $stmtLT->fetchAll(PDO::FETCH_ASSOC);
@@ -416,5 +419,6 @@ $leaveTypes = $stmtLT->fetchAll(PDO::FETCH_ASSOC);
   </div>
 
   <script src="../../scripts/user.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

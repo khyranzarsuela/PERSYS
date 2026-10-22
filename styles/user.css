@@ -1147,3 +1147,262 @@ ul, ol {
   .stat-cards-row { grid-template-columns: 1fr; }
   .modal-box { max-width: 95vw; padding: 22px; }
 }
+
+/*GLOBAL SETTINGS*/
+
+
+/* ============================================================
+   GLOBAL PERSYS ACCESSIBILITY PREFERENCES
+   ============================================================ */
+
+:root {
+  --app-font-size: 16px;
+  --persys-font-size: 16px;
+  --app-letter-spacing: 0px;
+  --app-line-height: 1.5;
+}
+
+/* Root font size makes rem-based elements scale consistently. */
+html {
+  font-size: var(--app-font-size, 16px);
+}
+
+/* Apply global typography preferences. */
+body {
+  font-size: var(--persys-font-size, 16px);
+  letter-spacing: var(--app-letter-spacing, 0px);
+  line-height: var(--app-line-height, 1.5);
+}
+
+/* Inherit spacing and line height where possible. */
+body p,
+body label,
+body input,
+body select,
+body textarea,
+body button,
+body th,
+body td,
+body li,
+body a,
+body span,
+body small,
+body strong,
+body em {
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+
+/* Dark theme */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --clr-cream-bg: #17131d;
+  --clr-card-bg: #26212e;
+  --clr-notif-item-bg: #26212e;
+  --clr-border-light: #484052;
+  --clr-text-dark: #f5f2fa;
+  --clr-text-mid: #d0c9db;
+  --clr-text-light: #aaa1b8;
+  --clr-white: #f5f2fa;
+}
+
+/* Common elements using hardcoded light backgrounds */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .page-content {
+  background-color: var(--clr-cream-bg);
+  color: var(--clr-text-dark);
+}
+
+html[data-theme="dark"] .settings-card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .stat-card-h,
+html[data-theme="dark"] .sc-balance-card,
+html[data-theme="dark"] .quick-action-card,
+html[data-theme="dark"] .request-card,
+html[data-theme="dark"] .credit-balance-card,
+html[data-theme="dark"] .sc-log-table,
+html[data-theme="dark"] .my-request-table,
+html[data-theme="dark"] .recent-leave-table,
+html[data-theme="dark"] .notif-panel,
+html[data-theme="dark"] .modal-box {
+  background-color: var(--clr-card-bg);
+  color: var(--clr-text-dark);
+  border-color: var(--clr-border-light);
+}
+
+html[data-theme="dark"] .mode-option,
+html[data-theme="dark"] .modal-body .form-group input,
+html[data-theme="dark"] .modal-body .form-group select,
+html[data-theme="dark"] .modal-body .form-group textarea {
+  background-color: #302a3a;
+  color: var(--clr-text-dark);
+  border-color: var(--clr-border-light);
+}
+
+html[data-theme="dark"] .data-table th {
+  background-color: #352b43;
+  color: var(--clr-text-dark);
+}
+
+html[data-theme="dark"] .data-table td {
+  color: var(--clr-text-mid);
+  border-color: var(--clr-border-light);
+}
+
+html[data-theme="dark"] .data-table tr:hover td,
+html[data-theme="dark"] .notif-item:hover {
+  background-color: #332b3e;
+}
+
+html[data-theme="dark"] .sc-balance-row {
+  background-color: #352b43;
+}
+
+html[data-theme="dark"] .settings-divider {
+  background-color: var(--clr-border-light);
+}
+/* Global font-size preference */
+html {
+  font-size: var(--app-font-size, 16px);
+}
+
+
+
+/* ============================================================
+   RANGE LABELS — Small / Medium / Large and Default / Wide / Wider
+   ============================================================ */
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--clr-text-light);
+  padding: 0 2px;
+  margin-top: -4px;
+}
+
+/* ============================================================
+   DARK MODE — Additional element coverage
+   ============================================================ */
+
+/* Sidebar keeps its purple identity in dark mode */
+html[data-theme="dark"] .sidebar {
+  background-color: var(--clr-purple-sidebar);
+}
+
+/* Topbar keeps its purple identity in dark mode */
+html[data-theme="dark"] .topbar {
+  background-color: var(--clr-purple-topbar);
+}
+
+/* Notification panel header stays dark-purple */
+html[data-theme="dark"] .notif-header {
+  background-color: var(--clr-purple-notif-hd);
+}
+
+/* Table header bar (e.g. Recent Leave) */
+html[data-theme="dark"] .table-header-bar {
+  background-color: var(--clr-purple-notif-hd);
+}
+
+/* Notification items */
+html[data-theme="dark"] .notif-item {
+  background-color: var(--clr-card-bg);
+  border-color: var(--clr-border-light);
+}
+
+/* Stat cards */
+html[data-theme="dark"] .stat-card-h {
+  background-color: var(--clr-card-bg);
+  border-color: var(--clr-border-light);
+}
+
+/* Service credit balance row */
+html[data-theme="dark"] .sc-balance-row {
+  background-color: #352b43;
+}
+
+/* Service credit balance value */
+html[data-theme="dark"] .sc-balance-value {
+  color: #b47fff;
+}
+
+/* Credit balance number */
+html[data-theme="dark"] .credit-balance-number {
+  color: #b47fff;
+}
+
+/* Input range accent */
+html[data-theme="dark"] .settings-row input[type="range"] {
+  accent-color: var(--clr-yellow-accent);
+}
+
+/* Range labels */
+html[data-theme="dark"] .range-labels {
+  color: var(--clr-text-light);
+}
+
+/* Mode option selected state in dark mode */
+html[data-theme="dark"] .mode-option.selected {
+  border-color: var(--clr-yellow-accent);
+  background-color: #3a3020;
+}
+
+/* Settings card title border */
+html[data-theme="dark"] .settings-card-title {
+  color: var(--clr-text-dark);
+  border-color: var(--clr-border-light);
+}
+
+/* Toggle track (unchecked) */
+html[data-theme="dark"] .toggle-track {
+  background: #555;
+}
+
+/* Secondary button */
+html[data-theme="dark"] .btn-secondary {
+  color: var(--clr-text-mid);
+  border-color: var(--clr-border-light);
+}
+html[data-theme="dark"] .btn-secondary:hover {
+  background-color: #3a3344;
+}
+
+/* Logout button */
+html[data-theme="dark"] .btn-logout {
+  color: var(--clr-text-mid);
+  border-color: var(--clr-border-light);
+}
+
+/* Data table row hover */
+html[data-theme="dark"] .data-table tr:hover td {
+  background-color: #332b3e;
+}
+
+/* Status badges keep their colours */
+html[data-theme="dark"] .status-badge--pending  { background-color: var(--clr-yellow-badge); color: #1a1a1a; }
+html[data-theme="dark"] .status-badge--approved { background-color: #22C55E; color: #fff; }
+html[data-theme="dark"] .status-badge--rejected { background-color: #EF4444; color: #fff; }
+
+/* Modal info note */
+html[data-theme="dark"] .modal-info-note {
+  background: #2a2438;
+  border-color: #7b3fc4;
+  color: var(--clr-text-mid);
+}
+
+/* Modal review rows */
+html[data-theme="dark"] .modal-review-row {
+  border-color: var(--clr-border-light);
+}
+html[data-theme="dark"] .modal-review-label { color: var(--clr-text-dark); }
+html[data-theme="dark"] .modal-review-value { color: var(--clr-text-mid); }
+
+/* Profile page value display */
+html[data-theme="dark"] .profile-value {
+  color: var(--clr-text-dark);
+}
+html[data-theme="dark"] .profile-section-title {
+  color: var(--clr-text-dark);
+  border-color: var(--clr-border-light);
+}

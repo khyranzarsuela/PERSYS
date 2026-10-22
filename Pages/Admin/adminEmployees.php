@@ -325,12 +325,15 @@ $Accounts = $stmt->fetchAll();
 
     .table-scroll-wrap {
       overflow-x: auto;
+      overflow-y: auto;
+      max-height: 55vh;
       border: 1px solid #DDD6C8;
       border-radius: 10px;
     }
 
-    /* Scrollbar styling */
+    /* Scrollbar styling — both axes */
     .table-scroll-wrap::-webkit-scrollbar {
+      width: 6px;
       height: 6px;
     }
 
@@ -366,6 +369,12 @@ $Accounts = $stmt->fetchAll();
       font-weight: 700;
       color: #222;
       white-space: nowrap;
+      /* Stick to top of the scroll container while scrolling rows */
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background-color: #ffffff;
+      box-shadow: 0 2px 0 #DDD6C8;
     }
 
     /* Body rows — alternating stripe */
@@ -821,7 +830,7 @@ dialog#addEmployeeDialog {
 
           <!-- Settings -->
           <li>
-            <a href="adminSettings.html" class="nav-item">
+            <a href="adminSettings.php" class="nav-item">
               <span class="nav-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="3"/>
@@ -1264,6 +1273,7 @@ dialog#addEmployeeDialog {
   <!-- END APP SHELL -->
   <!-- Shared admin JS (hamburger, sidebar, nav highlight) -->
   <script src="../../scripts/admin.js"></script>
+  <script src="../../scripts/settings.js"></script>
 
   <!-- ============================================================
        PAGE-SCOPED JS � adminEmployees.html

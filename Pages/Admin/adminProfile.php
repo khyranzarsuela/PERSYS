@@ -432,5 +432,6 @@ $profile = $stmt->fetch();
     </div>
   </div>
   <script src="../../scripts/admin.js"></script>
+  <script src="../../scripts/settings.js"></script>
 </body>
 </html>

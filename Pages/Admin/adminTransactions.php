@@ -19,6 +19,13 @@ $sql = "
         lr.reason_details,
         lr.status,
         lr.credit_type_id,
+        lr.reviewed_by,
+        lr.reviewed_at,
+        CONCAT(
+            reviewer.first_name, ' ',
+            COALESCE(CONCAT(reviewer.middle_name, ' '), ''),
+            reviewer.last_name
+        ) AS reviewer_name,
         
         COALESCE((
             SELECT SUM(
@@ -69,6 +76,12 @@ $sql = "
 
     LEFT JOIN service_credit_types sct
         ON sct.credit_type_id = lr.credit_type_id
+
+    LEFT JOIN accounts AS reviewer_account
+    ON reviewer_account.account_id = lr.reviewed_by
+
+    LEFT JOIN employees AS reviewer
+        ON reviewer.employee_id = reviewer_account.employee_id
 
     ORDER BY
         CASE
@@ -632,7 +645,11 @@ function txEscape($value): string
     cursor: not-allowed;
     opacity: 0.85;
 }
-
+/* Ensure hidden transaction controls stay hidden */
+#txCreditPoolGroup[hidden],
+#txFinalizationNote[hidden] {
+    display: none !important;
+}
 
   </style>
 </head>
@@ -885,6 +902,12 @@ function txEscape($value): string
                                             data-reason="<?= txEscape($request['reason_details'] ?? '') ?>"
                                             data-local-balance="<?= txEscape($request['local_balance']) ?>"
                                             data-national-balance="<?= txEscape($request['national_balance']) ?>"
+                                            data-reviewed-by="<?= txEscape($request['reviewer_name'] ?? '') ?>"
+                                            data-reviewed-at="<?= txEscape(
+                                                !empty($request['reviewed_at'])
+                                                    ? date('F j, Y g:i A', strtotime($request['reviewed_at']))
+                                                    : ''
+                                            ) ?>"
                                         >
                                             View
                                         </button>
@@ -982,11 +1005,12 @@ function txEscape($value): string
 
       <!-- Service Credit Information -->
       <h3 class="tx-section-heading">Service Credit Information</h3>
-        <div class="tx-detail-row">
-            <span class="tx-detail-label">Service Credit Type</span>
-            <span class="tx-detail-value" id="txCreditType">—</span>
-        </div>
-    
+
+      <div class="tx-detail-row">
+          <span class="tx-detail-label">Service Credit Type</span>
+          <span class="tx-detail-value" id="txCreditType">Not selected</span>
+      </div>
+
       <div class="tx-detail-row">
           <span class="tx-detail-label">Current Balance</span>
           <span class="tx-detail-value" id="txCurrentBalance">
@@ -994,7 +1018,8 @@ function txEscape($value): string
           </span>
       </div>
 
-      <div class="tx-detail-row">
+      <!-- Hidden until Approved is selected -->
+      <div class="tx-detail-row" id="txCreditPoolGroup" hidden>
           <label class="tx-detail-label" for="txDeductionPool">
               Deduct From
           </label>
@@ -1019,28 +1044,37 @@ function txEscape($value): string
       <!-- Submitted Document -->
       <h3 class="tx-section-heading">Submitted Document</h3>
 
-      <!-- Filename — always visible -->
+      
+    <!-- Generate Form 6 for printing and signatures -->
+    <div class="tx-form6-actions" id="txForm6Actions">
+      <button type="button" class="tx-btn-download" id="txGenerateForm6">
+        Generate / Print Form 6
+      </button>
+    </div>
+
+
+      <!-- Filename — always visible
       <div class="tx-doc-filename">
-        <!-- Paperclip icon -->
+        Paperclip icon 
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
         </svg>
         Apply_for_Leave.pdf
-      </div>
+      </div> -->
 
       <!-- Pending: note that file is available after approval -->
-      <p class="tx-doc-pending-note">The file is available after approval.</p>
+      <p class="tx-doc-pending-note">This file is available for download and print.</p>
 
       <!-- Approved: download button -->
-      <button type="button" class="tx-btn-download">
+      <!-- <button type="button" class="tx-btn-download"> -->
         <!-- Download icon -->
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+        <!-- <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
         Download File
-      </button>
+      </button> -->
 
       <!-- Rejected: file not available -->
       <div class="tx-doc-unavailable" aria-live="polite">
@@ -1049,26 +1083,45 @@ function txEscape($value): string
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
-        File download not available
+        File download and print not available
+      </div>
+     
+      <!-- Audit trail (approved / rejected) -->
+      <div class="tx-audit" aria-live="polite">
+          <div class="tx-audit-row">
+              <span class="tx-audit-label tx-audit-by-label"></span>
+              <span class="tx-audit-value" id="txReviewedBy"></span>
+          </div>
+
+          <div class="tx-audit-row">
+              <span class="tx-audit-label tx-audit-on-label"></span>
+              <span class="tx-audit-value" id="txReviewedAt">—</span>
+          </div>
       </div>
 
-      <!-- Audit trail (approved / rejected) — label text set by CSS ::after -->
-      <div class="tx-audit" aria-live="polite">
-        <div class="tx-audit-row">
-          <span class="tx-audit-label tx-audit-by-label"></span>
-          <span class="tx-audit-value">Admin</span>
-        </div>
-        <div class="tx-audit-row">
-          <span class="tx-audit-label tx-audit-on-label"></span>
-          <span class="tx-audit-value">September 09, 2026</span>
-        </div>
-      </div>
 
       <!-- Admin Action buttons (hidden once actioned) -->
-      <div class="tx-action-row">
-        <button type="button" class="tx-btn-approve" id="txBtnApprove">Approve Request</button>
-        <button type="button" class="tx-btn-reject"  id="txBtnReject">Reject Request</button>
+      
+    <!-- Finalize the request after receiving the signed Form 6 -->
+    <div class="tx-action-row" id="txFinalizationControls">
+      <div class="tx-form-group">
+        <label for="txFinalStatus">Final Decision</label>
+        <select id="txFinalStatus" class="tx-credit-select">
+          <option value="">Select decision</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
       </div>
+
+
+      <button type="button" class="tx-btn-approve" id="txBtnSaveDecision">
+        Save Final Decision
+      </button>
+    </div>
+
+    <p id="txFinalizationNote" class="tx-muted" hidden>
+      This request has already been finalized. Its decision cannot be changed here.
+    </p>
 
     </div><!-- END .tx-modal -->
   </div>
@@ -1076,6 +1129,7 @@ function txEscape($value): string
 
   <!-- Shared admin JS (hamburger / mobile sidebar) -->
   <script src="../../scripts/admin.js"></script>
+  <script src="../../scripts/settings.js"></script>
 
   <!-- ============================================================
        PAGE-SCOPED JS — adminTransactions.html
@@ -1095,8 +1149,6 @@ function txEscape($value): string
     var overlay    = document.getElementById('txModalOverlay');
     var modal      = document.getElementById('txModal');
     var closeBtn   = document.getElementById('txModalClose');
-    var approveBtn = document.getElementById('txBtnApprove');
-    var rejectBtn  = document.getElementById('txBtnReject');
     var viewBtns   = document.querySelectorAll('.tx-view-btn');
     
     var deductionPool = document.getElementById('txDeductionPool');
@@ -1106,6 +1158,45 @@ function txEscape($value): string
 
     var selectedRequest = null;
 
+    var deductionPool = document.getElementById('txDeductionPool');
+    var currentBalanceEl = document.getElementById('txCurrentBalance');
+    var deductionAmountEl = document.getElementById('txDeductionAmount');
+    var remainingBalanceEl = document.getElementById('txRemainingBalance');
+
+    var selectedRequest = null;
+
+    var finalStatusSelect = document.getElementById('txFinalStatus');
+    var creditPoolGroup = document.getElementById('txCreditPoolGroup');
+    var saveDecisionBtn = document.getElementById('txBtnSaveDecision');
+    var finalizationControls = document.getElementById('txFinalizationControls');
+    var finalizationNote = document.getElementById('txFinalizationNote');
+    
+    var generateForm6Btn = document.getElementById('txGenerateForm6');
+
+    finalStatusSelect.addEventListener('change', function () {
+        var isApproval = this.value === 'Approved';
+
+        creditPoolGroup.hidden = !isApproval;
+
+        if (!isApproval) {
+            deductionPool.value = '';
+        }
+
+        updateCreditPreview();
+    });
+
+  finalStatusSelect.addEventListener('change', function () {
+      var isApproval = this.value === 'Approved';
+
+      creditPoolGroup.hidden = !isApproval;
+
+      if (!isApproval) {
+          deductionPool.value = '';
+      }
+
+      updateCreditPreview();
+  });
+
 /* 1. OPEN MODAL — display the selected database request */
 
 viewBtns.forEach(function (btn) {
@@ -1114,6 +1205,15 @@ viewBtns.forEach(function (btn) {
 
         // Get the selected request's information.
         var request = btn.dataset;
+
+        selectedRequest = {
+            requestId: request.requestId,
+            status: request.status,
+            totalDays: request.totalDays,
+            localBalance: request.localBalance,
+            nationalBalance: request.nationalBalance,
+            creditType: request.creditType
+        };
 
         // Display request details.
         document.getElementById('txRequestNumber').textContent =
@@ -1161,29 +1261,59 @@ viewBtns.forEach(function (btn) {
             actualStatus = 'pending';
         }
 
-       
       modal.dataset.status = actualStatus;
 
-      // Only pending requests can be processed.
-      approveBtn.disabled = actualStatus !== 'pending';
-      rejectBtn.disabled = actualStatus !== 'pending';
+      document.getElementById('txReviewedBy').textContent = '(Admin) ' +
+      request.reviewedBy || 'Unknown admin';
 
-      // Lock the credit pool for already-processed requests.
-      deductionPool.disabled = actualStatus !== 'pending';
+      document.getElementById('txReviewedAt').textContent =
+      request.reviewedAt || 'Not available';
 
-      // For a pending request, use its saved pool if one exists.
-      // For approved/rejected requests, keep the saved selection visible.
-      if (actualStatus === 'pending') {
-          deductionPool.value =
-              request.creditType === 'Local' ? '1' :
-              request.creditType === 'National' ? '2' : '';
-      } else {
-          deductionPool.value =
-              request.creditType === 'Local' ? '1' :
-              request.creditType === 'National' ? '2' : '';
-      }
+      
+        /* Show Form 6 generation for Pending and Approved requests.
+          Do not offer it for Rejected requests. */
+        if (generateForm6Btn) {
+            generateForm6Btn.style.display =
+                actualStatus === 'rejected' ? 'none' : 'inline-flex';
+        }
 
-      updateCreditPreview();
+        
+/* Generate Form 6 without changing the request status or credits. */
+if (generateForm6Btn) {
+    generateForm6Btn.addEventListener('click', function () {
+        if (!selectedRequest || !selectedRequest.requestId) {
+            alert('Please open a leave request first.');
+            return;
+        }
+
+        if (modal.dataset.status === 'rejected') {
+            alert('Form 6 generation is unavailable for rejected requests.');
+            return;
+        }
+
+        var url = '../../generateForm6.php?request_id=' +
+            encodeURIComponent(selectedRequest.requestId);
+
+        window.open(url, '_blank', 'noopener');
+    });
+}
+
+
+      var isPending = actualStatus === 'pending';
+
+      finalizationControls.hidden = !isPending;
+      finalizationNote.hidden = isPending;
+
+      finalStatusSelect.value = '';
+      creditPoolGroup.hidden = true;
+
+      deductionPool.disabled = !isPending;
+      deductionPool.value = '';
+
+      currentBalanceEl.textContent = 'Select a credit pool';
+      deductionAmountEl.textContent = '—';
+      remainingBalanceEl.textContent = '—';
+      remainingBalanceEl.style.color = '#555';
 
       openModal();
     });
@@ -1207,108 +1337,83 @@ viewBtns.forEach(function (btn) {
       }
     });
 
-    
-    /* ── 3. APPROVE / REJECT THROUGH PHP ───────────────────── */
+/* ── 3. SAVE FINAL DECISION THROUGH PHP ─────────────── */
 
-    async function processRequest(action) {
-      if (!selectedRequest || !selectedRequest.requestId) {
+async function processFinalDecision() {
+    if (!selectedRequest || !selectedRequest.requestId) {
         alert('Please open a leave request first.');
         return;
-      }
+    }
 
-      var formData = new FormData();
-
-      formData.append('action', action);
-      formData.append('request_id', selectedRequest.requestId);
-
-      if (action === 'approve') {
-        if (!deductionPool.value) {
-          alert('Please select a service credit pool.');
-          return;
-        }
-
-        formData.append('credit_type_id', deductionPool.value);
-      }
-
-      var confirmation = action === 'approve'
-        ? 'Approve this request and deduct service credits?'
-        : 'Reject this leave request?';
-
-      if (!window.confirm(confirmation)) {
+    if (selectedRequest.status !== 'pending') {
+        alert('This request has already been finalized.');
         return;
-      }
+    }
 
-      approveBtn.disabled = true;
-      rejectBtn.disabled = true;
+    var targetStatus = finalStatusSelect.value;
 
-      try {
+    if (!['Approved', 'Rejected'].includes(targetStatus)) {
+        alert('Please select Approved or Rejected.');
+        return;
+    }
+
+    // A credit pool is required only for approval.
+    if (targetStatus === 'Approved' && !deductionPool.value) {
+        alert('Please select a service credit pool.');
+        return;
+    }
+
+    var confirmation = targetStatus === 'Approved'
+        ? 'Confirm official approval and deduct service credits?'
+        : 'Confirm official rejection? No credits will be deducted.';
+
+    if (!window.confirm(confirmation)) {
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('target_status', targetStatus);
+    formData.append('request_id', selectedRequest.requestId);
+
+    if (targetStatus === 'Approved') {
+        formData.append('credit_type_id', deductionPool.value);
+    }
+
+    saveDecisionBtn.disabled = true;
+    saveDecisionBtn.textContent = 'Saving...';
+
+    try {
         var response = await fetch('processTransaction.php', {
-          method: 'POST',
-          body: formData,
-          credentials: 'same-origin'
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
         });
 
         var result = await response.json();
 
         if (!response.ok || !result.success) {
-          alert(result.message || 'Unable to process this request.');
-          return;
+            alert(result.message || 'Unable to save the final decision.');
+            return;
         }
 
-        modal.dataset.status = result.status.toLowerCase();
+        alert(result.message || 'Final decision saved successfully.');
 
-        document.getElementById('txStatusText').textContent =
-          result.status;
-
-        if (action === 'approve') {
-          currentBalanceEl.textContent =
-            Number(result.balance).toFixed(2) + ' Credits';
-
-          deductionAmountEl.textContent =
-            Number(result.deduction).toFixed(2) + ' Credits';
-
-          remainingBalanceEl.textContent =
-            Number(result.remaining_balance).toFixed(2) + ' Credits';
-
-          selectedRequest.creditType =
-            deductionPool.value === '1' ? 'Local' : 'National';
-
-          selectedRequest.localBalance =
-            deductionPool.value === '1'
-              ? result.remaining_balance
-              : selectedRequest.localBalance;
-
-          selectedRequest.nationalBalance =
-            deductionPool.value === '2'
-              ? result.remaining_balance
-              : selectedRequest.nationalBalance;
-        }
-
-        alert(result.message);
-
-        // Reload so the table reflects the database status.
+        // Reload the page to display the updated database status
+        // and refreshed service-credit balances.
         window.location.reload();
 
-      } catch (error) {
-        console.error('Transaction error:', error);
-        alert('A network or server error occurred. Please try again.');
-      } finally {
-        approveBtn.disabled = false;
-        rejectBtn.disabled = false;
-      }
+    } catch (error) {
+        console.error('Final decision error:', error);
+        alert('A server or network error occurred. Please try again.');
+    } finally {
+        saveDecisionBtn.disabled = false;
+        saveDecisionBtn.textContent = 'Save Final Decision';
     }
+}
 
-    if (approveBtn) {
-      approveBtn.addEventListener('click', function () {
-        processRequest('approve');
-      });
-    }
-
-    if (rejectBtn) {
-      rejectBtn.addEventListener('click', function () {
-        processRequest('reject');
-      });
-    }
+if (saveDecisionBtn) {
+    saveDecisionBtn.addEventListener('click', processFinalDecision);
+}
 
     
     /* ── 5. SEARCH + STATUS / TYPE FILTERS ─────────────────── */

@@ -104,6 +104,28 @@
     }
   });
 
+  
+})();
+
+
+(function () {
+  'use strict';
+  if (typeof $ === 'undefined') return;
+  if (!$('.btn-logout').length) return;
+
+  $('.btn-logout').on('click', function () {
+    $('#logoutModal').css('display', 'flex');
+  });
+  $('#cancelLogoutBtn').on('click', function () {
+    $('#logoutModal').hide();
+  });
+  $('#confirmLogoutBtn').on('click', function () {
+    window.location.href = '/PERSYS/Pages/Admin/logout.php';
+  });
+  // Close on overlay click (but not on modal-box click)
+  $('#logoutModal').on('click', function (e) {
+    if ($(e.target).is('#logoutModal')) $(this).hide();
+  });
 })();
 
 /* ============================================================
@@ -111,7 +133,7 @@
    Guard: only runs when #profilePasswordToggle exists in DOM,
    so this block is a no-op on every other admin page.
    ============================================================ */
-
+ 
 (function () {
   'use strict';
 
@@ -151,4 +173,5 @@
     }
   });
 
+  
 })();
